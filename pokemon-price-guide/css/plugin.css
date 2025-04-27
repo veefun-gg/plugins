@@ -1,0 +1,632 @@
+/* GENERAL
+--------------------------------------------*/
+
+.clear {
+    width: 100%;
+    clear: both;
+}
+
+.center {
+    text-align: center;
+}
+
+.padding15 {
+    padding: 15px;
+}
+
+.padding15r {
+    padding: 0 15px 0 0;
+}
+
+.padding50r {
+    padding: 0 50px 0 0;
+}
+
+.quarter {
+    width: 25%;
+    float: left;
+    box-sizing: border-box;
+    height: auto;
+    display: block;
+}
+
+.fifth {
+    width: 20%;
+    float: left;
+    box-sizing: border-box;
+    height: auto;
+    display: block;
+}
+
+.third {
+    width: 33.33%;
+    float: left;
+    box-sizing: border-box;
+    height: auto;
+    display: block;
+}
+
+.half {
+    width: 50%;
+    float: left;
+    box-sizing: border-box;
+    height: auto;
+    display: block;
+}
+
+.twothirds {
+    width: 66.66%;
+    float: left;
+    box-sizing: border-box;
+    height: auto;
+    display: block;
+}
+
+.threequarters {
+    width: 75%;
+    float: left;
+    box-sizing: border-box;
+    height: auto;
+    display: block;
+}
+
+.margin5 {
+    width: 100%;
+    clear: both;
+    height: 5px;
+}
+
+.margin10 {
+    width: 100%;
+    clear: both;
+    height: 10px;
+}
+
+.margin15 {
+    width: 100%;
+    clear: both;
+    height: 15px;
+}
+
+.margin20 {
+    width: 100%;
+    clear: both;
+    height: 20px;
+}
+
+.margin25 {
+    width: 100%;
+    clear: both;
+    height: 25px;
+}
+
+.lds-roller {
+    display: inline-block;
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    margin: 20px 0 20px -40px;
+    left: 50%;
+}
+
+.lds-roller div {
+    animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    transform-origin: 40px 40px;
+}
+
+.lds-roller div:after {
+    content: " ";
+    display: block;
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #CCC;
+    margin: -4px 0 0 -4px;
+}
+
+.lds-roller div:nth-child(1) {
+    animation-delay: -0.036s;
+}
+
+.lds-roller div:nth-child(1):after {
+    top: 63px;
+    left: 63px;
+}
+
+.lds-roller div:nth-child(2) {
+    animation-delay: -0.072s;
+}
+
+.lds-roller div:nth-child(2):after {
+    top: 68px;
+    left: 56px;
+}
+
+.lds-roller div:nth-child(3) {
+    animation-delay: -0.108s;
+}
+
+.lds-roller div:nth-child(3):after {
+    top: 71px;
+    left: 48px;
+}
+
+.lds-roller div:nth-child(4) {
+    animation-delay: -0.144s;
+}
+
+.lds-roller div:nth-child(4):after {
+    top: 72px;
+    left: 40px;
+}
+
+.lds-roller div:nth-child(5) {
+    animation-delay: -0.18s;
+}
+
+.lds-roller div:nth-child(5):after {
+    top: 71px;
+    left: 32px;
+}
+
+.lds-roller div:nth-child(6) {
+    animation-delay: -0.216s;
+}
+
+.lds-roller div:nth-child(6):after {
+    top: 68px;
+    left: 24px;
+}
+
+.lds-roller div:nth-child(7) {
+    animation-delay: -0.252s;
+}
+
+.lds-roller div:nth-child(7):after {
+    top: 63px;
+    left: 17px;
+}
+
+.lds-roller div:nth-child(8) {
+    animation-delay: -0.288s;
+}
+
+.lds-roller div:nth-child(8):after {
+    top: 56px;
+    left: 12px;
+}
+
+@keyframes lds-roller {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* PRICE GUIDE
+--------------------------------------------*/
+
+.single-price-guide h1 {
+    padding: 0 5px 15px 5px;
+    margin: 0 0 -10px 0;
+    position: relative;
+    width: 100%;
+    max-width: 100%!important;
+    font-size: 28px!important;
+    line-height: 32px!important;
+    border-bottom: 1px solid #666;
+}
+
+.single-price-guide h1 small,
+.single-price-guide h1 span {
+    font-size: 75%;
+}
+
+.single-price-guide h1 span {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    margin-top: -20px;
+}
+
+.single-price-guide .pg-wrapper {
+    width: 100%;
+    padding: 0 0 10px 0;
+    box-sizing: border-box;
+    display: block;
+    height: auto;
+    overflow: hidden;
+    position: relative;
+}
+
+.single-price-guide .pg-wrapper .pg-section {
+    width: 100%;
+    padding: 20px 5px;
+    box-sizing: border-box;
+    display: block;
+    height: auto;
+    overflow: hidden;
+    position: relative;
+    margin: 10px 0;
+    border-bottom: 1px solid #666;
+    font-size: 16px;
+}
+
+.single-price-guide .pg-wrapper .pg-section h2 {
+    font-size: 22px;
+    line-height: 22px;
+    font-weight: 500;
+    margin: 20px 0 20px 0;
+    position: relative;
+}
+
+.single-price-guide .pg-wrapper .pg-section h2 span {
+    position: absolute;
+    right: 5px;
+    font-size: 16px;
+    line-height: 22px;
+    font-weight: 300;
+}
+
+.single-price-guide .pg-wrapper .pg-section h3 {
+    font-size: 17px;
+    font-weight: 300;
+    margin: 10px 0 20px 0;
+}
+
+/* LISTS
+--------------------------------------------*/
+
+.pgoptions {
+    display: inline;
+    width: 200px;
+    padding: 5px;
+    font-size: 14px;
+    height: 30px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    background-position: calc(100% - 13px) calc(1.5em - 8px), calc(100% - 8px) calc(1.5em - 8px)!important;
+    float: right;
+    box-sizing: border-box;
+}
+
+.types {
+    height: auto;
+    display: block;
+    overflow: hidden;
+    padding: 10px 0;
+    text-align: right;
+}
+
+.types input {
+    height: 18px;
+    width: 18px;
+    margin: 0;
+    display: inline;
+    z-index: 1;
+    flex: none;
+}
+
+.types label {
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 18px;
+    padding: 0 15px 0 0;
+    display: inline-block;
+    align-items: center;
+}
+
+.pg-list {
+    position: relative;
+    height: auto;
+    display: block;
+    overflow: hidden;
+    min-height: 500px;
+    width: 100%;
+    z-index: 999;
+    max-width: 100%!important;
+    min-width: 100%!important;
+}
+
+.pg-list .loading {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    text-align: center;
+    opacity: 0.6;
+    background: #FFF;
+}
+
+.pg-list .loading img {
+    position: absolute;
+    left: 50%;
+    top: 400px;
+    margin: -100px 0 0 -100px;
+}
+
+.pg-list .full.results {
+    padding: 15px;
+    font-size: 16px;
+}
+
+.pg-list .card {
+    padding: 10px;
+    display: block;
+    box-sizing: border-box;
+}
+
+.pg-list .card img {
+    width: 100%;
+    height: auto;
+    border-radius: 0!important;
+}
+
+.pg-list .full.card {
+    border-bottom: 1px solid #E1E1E1;
+    padding: 15px 0 10px 0;
+    width: 100%;   
+    height: auto;
+    display: block;
+    overflow: hidden;
+}
+
+.pg-list .card a {
+    color: #000;
+}
+
+.pg-list .card h3 {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.pg-list .full.card.odd {
+    background: #F9F9F9;  
+}
+
+.pg-list .full.card .quarters {
+    width: 7%;   
+}
+
+.pg-list .full.card .desc {
+    padding-left: 25px;
+    width: 93%;
+}
+
+.pg-list .full.card .desc h3 {
+    font-size: 22px;
+}
+
+.pg-list .btn {
+    padding: 3px 10px;
+    border-radius: 2px;
+}
+
+.pg-list .full.card .quarter.meta, .pg-list .full.meta {
+    font-size: 90%;
+}
+
+.pg-list .full.card .quarter.meta.last {
+    text-align: right;
+    padding-right: 10px;
+}
+
+.pagination {
+    width: 100%;
+    height: auto;
+    display: block;
+    overflow: hidden;
+    margin: 30px 0 0 0;
+}
+
+.pagination .item {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 2px;
+    border: 1px solid #333;
+    background: #E7E7E7;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+}
+
+.pagination .item:hover {
+    background: #E1E1E1;
+}
+
+.pagination .item.current, .pagination .item.current:hover {
+    background: #2271b1;
+    color: #FFF;
+    cursor: default;
+}
+
+.pagination .item.disabled {
+    opacity: 0.8;
+    color: #CCC;
+    border: 1px solid #CCC;
+    cursor: default;
+}
+
+
+/* RELATED CARDS
+--------------------------------------------*/
+
+.slick-list {
+}
+
+.related-cards-wrap {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 20px 0;
+    padding-bottom: 0px;
+    position: relative;
+}
+
+.related-cards {
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 20px 0;
+    padding-bottom: 80px;
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.related-cards .slick-track {
+    display: block;
+    padding: 15px 0;
+}
+
+.related-cards-wrap .slick-arrow {
+    position: absolute;
+    bottom: 0px;
+    left: 85px;
+    z-index: 9999;
+    opacity: 0.95;
+    transition: all ease-in 0.3s;
+    font-size: 40px;
+    line-height: 40px;
+    color: #FFF;
+    background: rgba(0,90,164,0.9);
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.related-cards-wrap .slick-arrow.custom-prev {
+    left: 5px;
+}
+
+.related-cards-wrap .slick-arrow:hover {
+    opacity: 0.8;
+}
+
+.related-cards-wrap .slick-next.slick-arrow {
+    left: auto;
+    right: 85px;
+}
+
+.related-cards-wrap .slick-next.slick-arrow.custom-next {
+    left: auto;
+    right: 5px;
+}
+
+.related-cards .card-wrap {
+    width: calc(20% - 10px);
+    padding: 5px;
+    float: left;
+    display: block;
+    box-sizing: border-box;
+    margin: 5px;
+    box-shadow: 0 0 5px 1px rgba(0,0,0,0.5);
+    border-radius: 10px;
+    background: #005AA4;
+}
+
+.related-cards .card-wrap img {
+    border-radius: 10px;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.related-cards .card-wrap h4 {
+    margin: 7px 0;
+    font-size: 17px;
+    padding: 0 5px;
+}
+
+.related-cards .card-wrap a h4 {
+    color: #FFF;
+}
+
+.related-cards .card-wrap p {
+    margin: 0;
+    font-size: 0;
+}
+
+.related-cards .card-wrap.slick-current {
+    background: #CC0000!important;
+    margin-top: -10px;
+}
+
+/*.related-cards .card-wrap.slick-current img {
+    margin-top: 0px;
+}
+
+.related-cards .card-wrap.slick-current h4 {
+    margin: 7px 0 0 0;
+}*/
+
+
+/* RESPONSIVE
+--------------------------------------------*/
+
+@media (max-width: 1024px) {
+
+    .related-cards-wrap .slick-arrow.custom-prev,
+    .related-cards-wrap .slick-next.slick-arrow.custom-next {
+        display: none;
+    }
+    
+    .related-cards-wrap .slick-arrow {
+        left: 5px;
+    }
+
+    .related-cards-wrap .slick-next.slick-arrow {
+        right: 5px;
+    }
+
+    .related-cards .card-wrap img {
+        width: 100%;
+        height: auto;
+    }
+
+    .related-cards .card-wrap {
+        width: auto;
+    }
+    
+}
+
+@media (max-width: 767px) {
+    .padding50r {
+        padding: 20px 0;
+    }
+    .quarter {
+        width: 50%;
+        padding: 5px;
+    }
+    .third,
+    .twothirds {
+        width: 100%;
+        clear: both;
+    }
+    .pgoptions {
+        width: 50%;
+        margin: 4px 0;
+    }
+    .fifth.card {
+        width: 100%;
+    }
+    .pg-list .full.card .quarters {
+        width: 25%;   
+    }
+    .pg-list .full.card .desc {
+        padding-left: 15px;
+        width: 75%;
+    }
+    .quarter.meta {
+        width: 100%!important;
+        padding: 2px 0;
+    }
+    .pg-list .full.card .quarter.meta.last {
+        text-align: left;
+        padding-top: 5px;
+    }
+}
