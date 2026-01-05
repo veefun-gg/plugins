@@ -1,9 +1,9 @@
 <?php
+require_once '_guard.php';
+
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 header('Connection: keep-alive');
-define('ABSPATH', dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))).'/');
-include_once(ABSPATH.'wp-load.php');
 global $wpdb;
 
 $count = $_GET['offset'] + 1;

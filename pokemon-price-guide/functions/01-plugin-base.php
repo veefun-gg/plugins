@@ -50,9 +50,11 @@ global $plugin_weburl;
 ?>
 
     <script type="text/javascript">
+    var ptpNonce = '<?php echo wp_create_nonce('ptp_admin_scripts'); ?>';
+    
     function updateCardsPricing(thatId,type) {
 
-        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-card.php", data: "id="+thatId+"&ptype="+type, success: function(data) {
+        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-card.php", data: "id="+thatId+"&ptype="+type+"&ptp_nonce="+ptpNonce, success: function(data) {
 
             jQuery("#result_"+thatId).html(data);
 
@@ -63,7 +65,7 @@ global $plugin_weburl;
         
     function updateCardsPricingGroup(theseIds,type) {
 
-        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-cards.php", data: "ids="+theseIds+"&ptype="+type, success: function(data) {
+        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-cards.php", data: "ids="+theseIds+"&ptype="+type+"&ptp_nonce="+ptpNonce, success: function(data) {
 
             //jQuery("#result_"+thatId).html(data);
             if(data != '') {

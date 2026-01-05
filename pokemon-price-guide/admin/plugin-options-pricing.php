@@ -9,6 +9,8 @@ global $wpdb,$plugin_weburl,$plugin_url;
 jQuery.noConflict();
 jQuery(document).ready(function() {
     
+    var ptpNonce = '<?php echo wp_create_nonce('ptp_admin_scripts'); ?>';
+    
     /*jQuery("p[id^='card_']").each(function() {
        
         var thisId = jQuery(this).attr("id").substr(6);
@@ -29,7 +31,7 @@ jQuery(document).ready(function() {
             setTimeout( function() { 
                 //console.log(thisId);
                 
-                jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-card.php", data: "id="+thatId, success: function(data)
+                jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-card.php", data: "id="+thatId+"&ptp_nonce="+ptpNonce, success: function(data)
                 {
                     
                     jQuery("span#result_"+thisId).html(data); 
