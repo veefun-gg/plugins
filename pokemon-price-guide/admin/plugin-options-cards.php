@@ -9,9 +9,11 @@ global $wpdb,$plugin_weburl,$plugin_url;
 jQuery.noConflict();
 jQuery(document).ready(function() {
     
+    var ptpNonce = '<?php echo wp_create_nonce('ptp_admin_scripts'); ?>';
+    
     function getCards(page) {
 	
-        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>/admin/scripts/update-cards.php", data: "page="+page+"&per=5", success: function(data)
+        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>/admin/scripts/update-cards.php", data: "page="+page+"&per=5&ptp_nonce="+ptpNonce, success: function(data)
         {
             
             if(data != 'EOL') {

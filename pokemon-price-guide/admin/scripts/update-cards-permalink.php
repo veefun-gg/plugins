@@ -1,6 +1,5 @@
 <?php
-define('ABSPATH', dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))).'/');
-include_once(ABSPATH.'wp-load.php');
+require_once '_guard.php';
 	
     /*$q = "SELECT * FROM ".$wpdb->prefix."ptp_cache_card ORDER BY api_id ASC LIMIT 2000 OFFSET ".$_GET['offset']."";
     //$q = "SELECT * FROM ".$wpdb->prefix."ptp_cache_card WHERE id = ".$_GET['id'];

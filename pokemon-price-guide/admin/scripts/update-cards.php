@@ -1,6 +1,5 @@
 <?php
-define('ABSPATH', dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))).'/');
-include_once(ABSPATH.'wp-load.php');
+require_once '_guard.php';
 	
     $api = getPokeCardsAll($_POST['page'],$_POST['per']);
 
