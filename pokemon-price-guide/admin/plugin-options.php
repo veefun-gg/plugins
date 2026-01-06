@@ -87,7 +87,14 @@ jQuery(document).ready(function() {
             <?php
             $q = "SELECT * FROM ".$wpdb->prefix."ptp_cache_card WHERE id = 1";
 	        $cache = $wpdb->get_row($q);
-            $data = unserialize($cache->cached_meta);
+            
+            // Handle missing cache object to prevent PHP warnings
+            if ($cache && $cache->cached_meta) {
+                $data = unserialize($cache->cached_meta);
+            } else {
+                $data = array(); // Default to empty array if no cache data
+            }
+            
             echo '<pre>'.print_r($data,true).'</pre>';
             ?>
                 
