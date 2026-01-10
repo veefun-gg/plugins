@@ -1,6 +1,5 @@
 <?php
-define('ABSPATH', dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))).'/');
-include_once(ABSPATH.'wp-load.php');
+require_once '_guard.php';
 global $wpdb;
 //echo '<div style="float:left;width:100%;padding:15px;box-sizing:border-box;background:#F1F1F1;font-size:10px;">';
 //echo '<h4>TCG Player</h4>';

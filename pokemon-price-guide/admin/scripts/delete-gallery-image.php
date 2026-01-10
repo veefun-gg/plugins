@@ -1,10 +1,7 @@
 <?php
 
-	define('ABSPATH', dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))).'/');
-	include_once(ABSPATH.'wp-config.php');
-	include_once(ABSPATH.'wp-load.php');
-	include_once(ABSPATH.'wp-includes/wp-db.php');
-	global $wpdb;
+require_once '_guard.php';
+global $wpdb;
 	
 	$upload_dir = wp_upload_dir();
 	

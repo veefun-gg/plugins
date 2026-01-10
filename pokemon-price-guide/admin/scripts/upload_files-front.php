@@ -1,10 +1,7 @@
 <?php
-define('ABSPATH', dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))).'/');
-define('ABSPATH2', dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/uploads/');
-include_once(ABSPATH.'wp-load.php');
-include_once(ABSPATH.'wp-includes/pluggable.php');
+require_once '_guard.php';
 
-if(wp_get_current_user()) {
+define('ABSPATH2', dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/uploads/');
 global $current_user;
 get_currentuserinfo();
 
