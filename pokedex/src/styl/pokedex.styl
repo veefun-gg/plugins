@@ -180,67 +180,15 @@ ul
                 height 3px
                 position absolute
                 background-color cast(white 20%)*/
-            // Type-specific styling using CSS variables
-            &.type--bug
-                background: var(--type-bug)
-            &.type--dark
-                background: var(--type-dark)
-            &.type--dragon
-                background: var(--type-dragon)
-            &.type--electric
-                background: var(--type-electric)
-                // Light color - use dark text for contrast
-                span
-                    color: #111
-                .icon svg
-                    fill: #111
-                border-color: rgba(0,0,0,0.3)
-            &.type--fairy
-                background: var(--type-fairy)
-            &.type--fighting
-                background: var(--type-fighting)
-            &.type--fire
-                background: var(--type-fire)
-            &.type--flying
-                background: var(--type-flying)
-            &.type--ghost
-                background: var(--type-ghost)
-            &.type--grass
-                background: var(--type-grass)
-            &.type--ground
-                background: var(--type-ground)
-            &.type--ice
-                background: var(--type-ice)
-                color: #111
-                span
-                    color: #111
-                .icon svg
-                    fill: #111
-                border-color: rgba(0,0,0,0.3)
-            &.type--normal
-                background: var(--type-normal)
-            &.type--poison
-                background: var(--type-poison)
-            &.type--psychic
-                background: var(--type-psychic)
-            &.type--rock
-                background: var(--type-rock)
-            &.type--steel
-                background: var(--type-steel)
-            &.type--water
-                background: var(--type-water)
-            
-            // Legacy class support (for weaknesses that use same classes)
             &.ice,
             &.electric
                 text-shadow none
                 span
-                    color: #111
+                    color cast(black 77%)
                 .icon
                     svg
-                        fill: #111
-                    border-color: rgba(0,0,0,0.3)
-            
+                        color cast(black 77%)
+                    border-color cast(black 80%)
             span
                 color #fff
                 //text-shadow -1px 2px 0 cast(black 100%)
@@ -252,7 +200,7 @@ ul
                 margin-top 3px
                 margin-left -2px
                 svg
-                    fill: #fff
+                    color cast(white)
                     max-width 22px
                     max-height 22px
                     position absolute
@@ -260,88 +208,23 @@ ul
                     left 50%
                     transform translate(-50%, -50%)
 
-// Type pill styling for consistent alignment and colors
-body.single-pokedex
-    #pokedex .type--grass
-        background: var(--type-grass)
-    #pokedex .type--poison
-        background: var(--type-poison)
-    #pokedex .type--fire
-        background: var(--type-fire)
-    #pokedex .type--flying
-        background: var(--type-flying)
-    #pokedex .type--ice
-        background: var(--type-ice)
-        color: #111
-    #pokedex .type--psychic
-        background: var(--type-psychic)
-    
-    #pokedex .poke-types-item
-        color: #fff
-        border-radius: 999px
-        padding: 6px 10px
-        display: inline-flex
-        align-items: center
-        gap: 8px
-        line-height: 1
-    #pokedex .poke-types-item .icon
-        width: 18px
-        height: 18px
-        display: inline-flex
-        align-items: center
-        justify-content: center
-        flex: 0 0 18px
-    #pokedex .poke-types-item .icon svg
-        width: 18px
-        height: 18px
-        fill: currentColor
-    
-    // Typography: enforce clean sans-serif stack
-    #pokedex
-        font-family: Inter, Roboto, "Open Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif
-    #pokedex h1,
-    #pokedex h2,
-    #pokedex h3
-        font-family: inherit
-    
-    // Hide author/date meta on Pokedex pages
-    .entry-meta,
-    .ast-single-entry-banner,
-    header.entry-header
-        display: none
-
 #pokedex
     hug(90%)
     max-width 1200px
     margin-top 20px
     //padding-top 60px
     //background #fff
-    
-    // Type color CSS variables
-    --type-bug: #E8AA33
-    --type-dark: #D50A55
-    --type-dragon: #4A4468
-    --type-electric: #F1D941
-    --type-fairy: #FE9EA0
-    --type-fighting: #F75B21
-    --type-fire: #F08030
-    --type-flying: #A890F0
-    --type-ghost: #BE86C7
-    --type-grass: #78C850
-    --type-ground: #6F432A
-    --type-ice: #98D8D8
-    --type-normal: #A9A47A
-    --type-poison: #A040A0
-    --type-psychic: #F85888
-    --type-rock: #87877b
-    --type-steel: #575964
-    --type-water: #5D55BF
 
 #pokenav
     box(flex row nowrap, center center stretch, 200px 1 200px)
     text-align center
     margin-bottom 40px
     padding 0 60px
+    //border 1px solid rgba(0,0,0,.12)
+    //border-width 1px 0
+    //border-radius 999px
+    //background-color cast(#f9f9f9 50%)
+    //backdrop-filter blur(4px)
     @media(max-width 600px)
         padding 0 60px
     & > .pokenav-link
@@ -351,50 +234,54 @@ body.single-pokedex
         &.pokenav-right
             align-items flex-end
         a
-            display: inline-flex
-            align-items: center
-            gap: 10px
-            text-decoration: none
+            width 60px
+            height 60px
+            display block
+            position relative
             border-radius 6px
             transition border-color .3s, background-color .3s
             &.poke-nav-left
                 &:hover,
                 &:active
-                    .pokedex-nav-icon
+                    .arrow-button
                         margin-left -6px
             &.poke-nav-right
                 &:hover,
                 &:active
-                    .pokedex-nav-icon
+                    .arrow-button
                         margin-left 6px
-            .pokedex-nav-icon
-                width: 24px
-                height: 24px
-                display: inline-flex
-                align-items: center
-                justify-content: center
-                flex: 0 0 24px
+            &:before
+                content ""
+                position absolute
+                top 0
+                left 60%
+                right -60%
+                bottom 0
+                display block
+                z-index 2
+            &.poke-nav-left
+                &:before
+                    left -60%
+                    right 60%
+                .arrow-button
+                    left 0
+                    transform translate(-60%, -50%) scaleY(-1)
+            .arrow-button
+                position absolute
+                top 50%
+                left 100%
+                transform translate(-40%, -50%)
+                font-size 48px
+                z-index 1
                 transition margin .3s
-                svg
-                    width: 100%
-                    height: 100%
-                    fill: currentColor
-            .screen-reader-text
-                position: absolute
-                clip: rect(1px, 1px, 1px, 1px)
-                clip-path: inset(50%)
-                width: 1px
-                height: 1px
-                overflow: hidden
-                word-wrap: normal !important
+                //opacity .5
             .poke-nav-thumb
-                width: 44px
-                height: 44px
-                display: inline-block
-                background-size: contain
-                background-repeat: no-repeat
-                background-position: center
-                flex: 0 0 44px
+                width 100%
+                height 100%
+                display block
+                background-size contain
+                background-position 50% 50%
+                background-repeat no-repeat
                 border-radius 6px
                 position relative
                 z-index 3

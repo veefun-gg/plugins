@@ -22,21 +22,9 @@ add_action('init', 'add_pokedex_post_tax');
 add_action('wp_enqueue_scripts', 'pokedex_custom_js', 999);
 add_action('wp_enqueue_scripts', 'pokedex_awesome_icons');
 add_action('wp_enqueue_scripts', 'pokedex_custom', 100);
+add_filter( 'single_template', 'set_pokedex_single_template' );
 add_filter( 'archive_template', 'set_pokedex_archive_template' );
 add_filter( 'search_template', 'set_pokedex_search_template' );
-
-// Include helper functions for rendering
-require_once dirname( __FILE__ ) . '/includes/pokedex-render-helpers.php';
-
-// Include renderer for single pokedex entries
-require_once dirname( __FILE__ ) . '/includes/render-single.php';
-
-// Filter the_content to inject Pokedex markup inside #primary
-add_filter( 'the_content', 'ptp_filter_pokedex_content', 1 );
-
-// Filter shortcode output to remove inline scripts on pokedex pages
-// (scripts are now properly enqueued)
-add_filter( 'the_content', 'ptp_remove_inline_related_scripts', 20 );
 
 // ADMIN MENU AND PAGES
 // Add custom taxonomy for Pokémon
@@ -160,44 +148,11 @@ function page_builder_page($count) {
         </form>
     </div> <?php 
 }
-// Filter the_content to replace with Pokedex markup
-function ptp_filter_pokedex_content( $content ) {
-	// Only filter on single pokedex posts, main query, in the loop
-	if ( ! is_singular( 'pokedex' ) || ! is_main_query() || ! in_the_loop() ) {
-		return $content;
-	}
-	
-	// Replace content with Pokedex markup
-	return ptp_render_single_pokedex();
-}
-
-/**
- * Remove inline scripts from related cards shortcode output on pokedex pages.
- * Scripts are now properly enqueued via pokedex-related-cards.js
- *
- * @param string $content Post content.
- * @return string Filtered content.
- */
-function ptp_remove_inline_related_scripts( $content ) {
-	// Only filter on single pokedex posts
-	if ( ! is_singular( 'pokedex' ) ) {
-		return $content;
-	}
-	
-	// Remove inline script tags that contain slick/equalHeight logic from shortcode
-	// Matches script blocks containing jQuery.noConflict, equalHeight function, and slick initialization
-	$patterns = array(
-		// Match script tag with noConflict and equalHeight
-		'/<script[^>]*>[\s\S]*?jQuery\.noConflict\(\)[\s\S]*?jQuery\(document\)\.ready[\s\S]*?function equalHeight[\s\S]*?<\/script>/i',
-		// Match script tag with slick initialization
-		'/<script[^>]*>[\s\S]*?\.related-cards.*?\.slick\([\s\S]*?<\/script>/i',
-	);
-	
-	foreach ( $patterns as $pattern ) {
-		$content = preg_replace( $pattern, '', $content );
-	}
-	
-	return $content;
+// Force template for 'pokedex' custom post type
+function set_pokedex_single_template( $single_template ) {
+    global $post;
+    if ( 'pokedex' === $post->post_type ) { $single_template = dirname( __FILE__ ) . '/templates/single-pokedex.php'; }
+    return $single_template;
 }
 function set_pokedex_archive_template( $archive_template ) {
     global $post;
@@ -226,23 +181,6 @@ add_filter('posts_orderby','changeSearchSort',10,2);
 // Add custom scripts and styles to pokedex pages
 function pokedex_custom_js() { 
     wp_enqueue_script( 'pokedex_scripts', plugin_dir_url( __FILE__ ) . 'dist/js/primetime-pokedex.js', array('jquery'), '1.0', true );
-    
-    // Enqueue related cards slider script only on single pokedex pages
-    if ( is_singular( 'pokedex' ) ) {
-        // Check if slickJS is already registered (from price-guide plugin)
-        $slick_deps = array( 'jquery' );
-        if ( wp_script_is( 'slickJS', 'registered' ) ) {
-            $slick_deps[] = 'slickJS';
-        }
-        
-        wp_enqueue_script(
-            'pokedex-related-cards',
-            plugin_dir_url( __FILE__ ) . 'assets/js/pokedex-related-cards.js',
-            $slick_deps,
-            '1.0.0',
-            true
-        );
-    }
 }
 function pokedex_custom(){
     /*if( is_singular('pokedex') ){*/
