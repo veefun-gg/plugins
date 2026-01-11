@@ -74,3 +74,11 @@ typings/
 
 # FuseBox cache
 .fusebox/
+
+# Generated local assets (do not commit)
+pokeimg/*
+!pokeimg/get-poke-images.php
+
+# Local backups
+*.bak
+
