@@ -21,8 +21,18 @@ body
 #page
     background none
     @media(max-width 1400px)
-        padding-left 20px
-        padding-right 20px
+        body.single-pokedex &
+            padding-left 20px
+            padding-right 20px
+        body.post-type-archive-pokedex &
+            padding-left 20px
+            padding-right 20px
+        body.tax-pokedex_type &
+            padding-left 20px
+            padding-right 20px
+        body.tax-pokedex_tag &
+            padding-left 20px
+            padding-right 20px
 b, strong  
     font-weight 700
 
@@ -1240,3 +1250,70 @@ body.search .page-header
             font-weight bold
             span
                 font-weight normal
+
+body.single-pokedex
+    #pokedex
+        margin-top 56px
+    #pokemon
+        ul.poke-pills
+            li
+                font-family "Poppins", sans-serif
+                font-weight 700
+                letter-spacing .25px
+                span
+                    font-family "Poppins", sans-serif
+        .poke-image
+            .poke-image-placeholder
+                h1,
+                h2
+                    font-family "Poppins", sans-serif!important
+                    font-weight 700
+                    letter-spacing 0
+                    text-shadow -1px 2px 0 cast(black 55%)
+                .poke-overview
+                    font-family "Poppins", sans-serif
+                    font-weight 600
+                    .poke-id
+                        font-family "Poppins", sans-serif
+                        font-weight 700
+                        letter-spacing 0
+            .poke-stats > ul li
+                .poke-stats-item-amount,
+                .poke-stats-item-title
+                    font-family "Poppins", sans-serif
+                    letter-spacing 0
+                .poke-stats-item-title
+                    font-weight 700
+        .poke-card
+            h2,
+            h3
+                font-family "Poppins", sans-serif
+            h2:before,
+            h3:before
+                background-color rgba(244, 248, 255, .16)
+                background linear-gradient(90deg, rgba(244, 248, 255, .38) 0%, rgba(244, 248, 255, 0) 78%)
+        ul.poke-details-list
+            li
+                span:nth-child(2)
+                    border-bottom 1px dotted rgba(244, 248, 255, .35)
+        ul.poke-spells-list
+            li
+                ul
+                    li
+                        border-bottom 1px dotted rgba(244, 248, 255, .28)
+    @media(max-width 1000px)
+        #pokemon
+            .poke-profile
+                align-items stretch
+            .poke-image,
+            .poke-summary
+                width 100%
+                max-width 100%
+                float none
+                margin-left 0
+                flex-basis 100%
+            .poke-summary
+                margin-top 24px
+            .poke-card.poke-card-half
+                display block
+                width 100%

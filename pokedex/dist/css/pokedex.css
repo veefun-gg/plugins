@@ -748,10 +748,13 @@ h6 a,
   font-weight: 400;
 }
 #content.site-content {
-  padding: 40px 0;
+  padding-bottom: 40px;
 }
-body.home #content.site-content {
-  padding-top: 0;
+body.single-pokedex #content.site-content,
+body.post-type-archive-pokedex #content.site-content,
+body.tax-pokedex_type #content.site-content,
+body.tax-pokedex_tag #content.site-content {
+  padding-top: 40px;
 }
 body.home .page .entry-title {
   display: none;
@@ -2155,6 +2158,56 @@ body.archive.has-sidebar .page-header h1 span,
 body.search .page-header h1 span {
   font-weight: normal;
 }
+body.single-pokedex #pokedex {
+  margin-top: 56px;
+}
+body.single-pokedex #pokemon ul.poke-pills li {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+}
+body.single-pokedex #pokemon ul.poke-pills li span {
+  font-family: "Poppins", sans-serif;
+}
+body.single-pokedex #pokemon .poke-image .poke-image-placeholder h1,
+body.single-pokedex #pokemon .poke-image .poke-image-placeholder h2 {
+  font-family: "Poppins", sans-serif !important;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-shadow: -1px 2px 0 rgba(0, 0, 0, 0.55);
+}
+body.single-pokedex #pokemon .poke-image .poke-image-placeholder .poke-overview {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+body.single-pokedex #pokemon .poke-image .poke-image-placeholder .poke-overview .poke-id {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+body.single-pokedex #pokemon .poke-image .poke-stats > ul li .poke-stats-item-amount,
+body.single-pokedex #pokemon .poke-image .poke-stats > ul li .poke-stats-item-title {
+  font-family: "Poppins", sans-serif;
+  letter-spacing: 0;
+}
+body.single-pokedex #pokemon .poke-image .poke-stats > ul li .poke-stats-item-title {
+  font-weight: 700;
+}
+body.single-pokedex #pokemon .poke-card h2,
+body.single-pokedex #pokemon .poke-card h3 {
+  font-family: "Poppins", sans-serif;
+}
+body.single-pokedex #pokemon .poke-card h2:before,
+body.single-pokedex #pokemon .poke-card h3:before {
+  background-color: rgba(244, 248, 255, 0.16);
+  background: linear-gradient(90deg, rgba(244, 248, 255, 0.38) 0%, rgba(244, 248, 255, 0) 78%);
+}
+body.single-pokedex #pokemon ul.poke-details-list li span:nth-child(2) {
+  border-bottom: 1px dotted rgba(244, 248, 255, 0.35);
+}
+body.single-pokedex #pokemon ul.poke-spells-list li ul li {
+  border-bottom: 1px dotted rgba(244, 248, 255, 0.28);
+}
 @-webkit-keyframes shine {
   0% {
     transform: translateX(-100%) translateY(-100%) rotate(30deg);
@@ -2184,7 +2237,10 @@ body.search .page-header h1 span {
   }
 }
 @media (max-width: 1400px) {
-  #page {
+  body.single-pokedex #page,
+  body.post-type-archive-pokedex #page,
+  body.tax-pokedex_type #page,
+  body.tax-pokedex_tag #page {
     padding-left: 20px;
     padding-right: 20px;
   }
@@ -2227,6 +2283,24 @@ body.search .page-header h1 span {
   }
 }
 @media (max-width: 1000px) {
+  body.single-pokedex #pokemon .poke-profile {
+    align-items: stretch;
+  }
+  body.single-pokedex #pokemon .poke-image,
+  body.single-pokedex #pokemon .poke-summary {
+    width: 100%;
+    max-width: 100%;
+    float: none;
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  body.single-pokedex #pokemon .poke-summary {
+    margin-top: 24px;
+  }
+  body.single-pokedex #pokemon .poke-card.poke-card-half {
+    display: block;
+    width: 100%;
+  }
   #pokemon .poke-profile {
     display: flex;
     flex-direction: column;
