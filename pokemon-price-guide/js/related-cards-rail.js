@@ -17,15 +17,40 @@
     var controls = component.querySelector('[data-related-cards-controls]');
     var prevButton = component.querySelector('[data-related-cards-prev]');
     var nextButton = component.querySelector('[data-related-cards-next]');
+    var pagePrevButton = component.querySelector('[data-related-cards-page-prev]');
+    var pageNextButton = component.querySelector('[data-related-cards-page-next]');
     var items = list ? list.querySelectorAll('.related-cards__item') : [];
     var activeIndex = 0;
 
-    if (!viewport || !list || !controls || !prevButton || !nextButton || !items.length) {
+    if (
+      !viewport ||
+      !list ||
+      !controls ||
+      !prevButton ||
+      !nextButton ||
+      !pagePrevButton ||
+      !pageNextButton ||
+      !items.length
+    ) {
       return;
     }
 
     function hasOverflow() {
       return viewport.scrollWidth - viewport.clientWidth > 2;
+    }
+
+    function getPageStep() {
+      var styles = window.getComputedStyle(list);
+      var gap = parseFloat(styles.columnGap || styles.gap || 0);
+      var firstItem = items[0];
+      var estimatedVisible = 1;
+
+      if (firstItem) {
+        var itemWidth = firstItem.getBoundingClientRect().width + gap;
+        estimatedVisible = Math.max(1, Math.floor((viewport.clientWidth + gap) / Math.max(itemWidth, 1)));
+      }
+
+      return Math.min(items.length - 1, Math.max(4, Math.min(5, estimatedVisible)));
     }
 
     function setActiveState(index) {
@@ -91,12 +116,17 @@
       controls.hidden = false;
       prevButton.disabled = activeIndex <= 0;
       nextButton.disabled = activeIndex >= items.length - 1;
+      pagePrevButton.hidden = !overflow;
+      pageNextButton.hidden = !overflow;
+      pagePrevButton.disabled = !overflow || activeIndex <= 0;
+      pageNextButton.disabled = !overflow || activeIndex >= items.length - 1;
 
       component.classList.toggle('is-overflowing', overflow);
     }
 
-    function moveActive(direction) {
-      var nextIndex = Math.max(0, Math.min(items.length - 1, activeIndex + direction));
+    function moveActive(direction, step) {
+      var distance = typeof step === 'number' ? step : 1;
+      var nextIndex = Math.max(0, Math.min(items.length - 1, activeIndex + direction * distance));
 
       if (nextIndex === activeIndex) {
         updateControls();
@@ -115,6 +145,14 @@
 
     nextButton.addEventListener('click', function () {
       moveActive(1);
+    });
+
+    pagePrevButton.addEventListener('click', function () {
+      moveActive(-1, getPageStep());
+    });
+
+    pageNextButton.addEventListener('click', function () {
+      moveActive(1, getPageStep());
     });
 
     list.addEventListener('click', function (event) {
