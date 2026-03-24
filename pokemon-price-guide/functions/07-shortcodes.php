@@ -248,153 +248,77 @@ add_shortcode( 'priceguide-list', 'priceguide_list_code' );
 /* RELATED DISPLAY
 -----------------------------------------------------------------*/
 
+function related_code_card_alt($card) {
+    $alt = trim($card->name . ' trading card');
+
+    if (!empty($card->card_set_name)) {
+        $alt .= ' from ' . $card->card_set_name;
+    }
+
+    return $alt;
+}
+
 function related_code_display($type,$name,$set) {
 global $plugin_weburl,$wpdb;
 
-    $content = '<script type="text/javascript">';
-    $content .= 'jQuery.noConflict();';
-    $content .= 'jQuery(document).ready(function() {';
-            
-        $content .= 'function equalHeight() {';
-
-            $content .= 'var highest = 0;';
-            $content .= 'jQuery(".card-wrap img").delay( 1000 ).each(function() {';
-
-                $content .= 'if(jQuery(this).outerHeight() > highest) {';
-                    $content .= 'highest = jQuery(this).outerHeight();';
-                $content .= '}';
-
-            $content .= '});';
-    
-            $content .= 'console.log(highest);';
-    
-            $content .= 'jQuery(".card-wrap").each(function() {';
-
-                $content .= 'jQuery(this).outerHeight((highest + 50)+"px");';
-
-            $content .= '});';
-    
-            $content .= 'jQuery(".slick-list").css("height",(highest+90)+"px");';
-
-        $content .= '}';
-    
-        /*$content .= 'jQuery(window).on("resize orientationchange", function() {';
-            //$content .= 'jQuery(".related-cards").slick("reinit");';
-            $content .= 'equalHeight();';
-            //$content .= 'console.log("resized");';
-        $content .= '});';*/
-    
-        $content .= 'var doit;';
-        $content .= 'window.onresize = function(){';
-            $content .= 'clearTimeout(doit);';
-            $content .= 'doit = setTimeout(equalHeight, 100);';
-        $content .= '};';
-    
-        $content .= 'jQuery(".related-cards").on("init", function(event, slick){';
-            $content .= 'equalHeight();';
-        $content .= '});';
-    
-        $content .= 'jQuery(".related-cards").on("breakpoint", function(event, slick, breakpoint){';
-            $content .= 'equalHeight();';
-        $content .= '});';
-
-        $content .= 'jQuery(".related-cards").slick({';
-            $content .= 'infinite: true,';
-            $content .= 'speed: 300,';
-            //$content .= 'mobileFirst: true,';
-            $content .= 'slidesToShow: 5,';
-            $content .= 'centerMode: true,';
-            $content .= 'slidesToScroll: 1,';
-            $content .= 'prevArrow:"<span class=\'slick-prev\'><</span>",';
-            $content .= 'nextArrow:"<span class=\'slick-next\'>></span>",';
-            $content .= 'responsive: [ {';
-              $content .= 'breakpoint: 1024,';
-              $content .= 'settings: {';
-                $content .= 'slidesToShow: 3,';
-                $content .= 'slidesToScroll: 1';
-              $content .= '}';
-            $content .= '}, {';
-              $content .= 'breakpoint: 600,';
-              $content .= 'settings: {';
-                $content .= 'slidesToShow: 1,';
-                $content .= 'slidesToScroll: 1';
-              $content .= '}';
-            $content .= '} ]';
-        $content .= '});';
-    
-        $content .= 'jQuery(".custom-next").on("click", function() {';
-            $content .= 'jQuery(".related-cards").slick("slickSetOption", {';
-               $content .= 'slidesToScroll: 5,';
-               $content .= 'responsive: [ {';
-                $content .= 'breakpoint: 1024,';
-                $content .= 'settings: {';
-                    $content .= 'slidesToShow: 3,';
-                    $content .= 'slidesToScroll: 3';
-                $content .= '}';
-                $content .= '} ]';
-            $content .= '}, true).slick("slickNext").slick("slickSetOption", {';
-               $content .= 'slidesToScroll: 1,';
-               $content .= 'responsive: [ {';
-                $content .= 'breakpoint: 1024,';
-                $content .= 'settings: {';
-                    $content .= 'slidesToShow: 3,';
-                    $content .= 'slidesToScroll: 1';
-                $content .= '}';
-                $content .= '} ]';
-            $content .= '}, true);';
-        $content .= '});';
-    
-        $content .= 'jQuery(".custom-prev").on("click", function() {';
-            $content .= 'jQuery(".related-cards").slick("slickSetOption", {';
-               $content .= 'slidesToScroll: 5,';
-               $content .= 'responsive: [ {';
-                $content .= 'breakpoint: 1024,';
-                $content .= 'settings: {';
-                    $content .= 'slidesToShow: 3,';
-                    $content .= 'slidesToScroll: 3';
-                $content .= '}';
-                $content .= '} ]';
-            $content .= '}, true).slick("slickPrev").slick("slickSetOption", {';
-               $content .= 'slidesToScroll: 1,';
-               $content .= 'responsive: [ {';
-                $content .= 'breakpoint: 1024,';
-                $content .= 'settings: {';
-                    $content .= 'slidesToShow: 3,';
-                    $content .= 'slidesToScroll: 1';
-                $content .= '}';
-                $content .= '} ]';
-            $content .= '}, true);';
-        $content .= '});';
-
-    $content .= '});';
-    $content .= '</script>';
-
-    $parts = explode(" ",$name);
-    echo '<h2>Cards Like '.$name.'</h2>'; 
-    $q = "SELECT * FROM ".$wpdb->prefix."ptp_cache_card WHERE name LIKE '%".$parts[0]."%'";
+    $parts = preg_split('/\s+/', trim($name));
+    $search_term = !empty($parts[0]) ? $parts[0] : $name;
+    $q = $wpdb->prepare(
+        "SELECT * FROM ".$wpdb->prefix."ptp_cache_card WHERE name LIKE %s",
+        '%'.$wpdb->esc_like($search_term).'%'
+    );
     $cards = $wpdb->get_results($q);
+
+    if (empty($cards)) {
+        return;
+    }
+
+    $component_id = function_exists('wp_unique_id') ? wp_unique_id('related-cards-') : 'related-cards-'.uniqid();
+    $viewport_id = $component_id . '-viewport';
+    $heading_id = $component_id . '-heading';
     
-    $content .= '<div class="related-cards-wrap">';
-
-        $content .= '<div class="related-cards">';
-
-            foreach($cards as $c) {
-
-                $content .= '<div class="card-wrap">';
-                    $content .= '<a href="'.get_bloginfo('wpurl').'/price-guide/'.$c->permalink.'/'.$c->api_id.'/">';
-                    $content .= '<img src="'.$c->image_large.'" />';
-                    $content .= '<h4>'.$c->name.'</h4>';
-                    $content .= '</a>';
-                $content .= '</div>';
-
-            }
-
+    $content = '<section class="related-cards" data-related-cards aria-labelledby="'.esc_attr($heading_id).'">';
+        $content .= '<div class="related-cards__header">';
+            $content .= '<h2 class="related-cards__heading" id="'.esc_attr($heading_id).'">Cards Like '.esc_html($name).'</h2>';
+            $content .= '<div class="related-cards__controls" data-related-cards-controls hidden>';
+                $content .= '<button class="related-cards__control related-cards__control--page-prev" type="button" data-related-cards-page-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Previous cards" disabled hidden>';
+                    $content .= '<span aria-hidden="true">&laquo;</span>';
+                $content .= '</button>';
+                $content .= '<button class="related-cards__control related-cards__control--prev" type="button" data-related-cards-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Previous card" disabled>';
+                    $content .= '<span aria-hidden="true">&larr;</span>';
+                $content .= '</button>';
+                $content .= '<button class="related-cards__control related-cards__control--next" type="button" data-related-cards-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Next card" disabled>';
+                    $content .= '<span aria-hidden="true">&rarr;</span>';
+                $content .= '</button>';
+                $content .= '<button class="related-cards__control related-cards__control--page-next" type="button" data-related-cards-page-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Next cards" disabled hidden>';
+                    $content .= '<span aria-hidden="true">&raquo;</span>';
+                $content .= '</button>';
+            $content .= '</div>';
         $content .= '</div>';
 
-        $content .= '<span class="slick-next slick-arrow custom-next" style="">&gt;&gt;</span>';
-        $content .= '<span class="slick-arrow custom-prev" style="">&lt;&lt;</span>';
-        
-    $content .= '</div>';
+        $content .= '<div class="related-cards__viewport" id="'.esc_attr($viewport_id).'" data-related-cards-viewport tabindex="0">';
+            $content .= '<ul class="related-cards__list">';
+                foreach($cards as $c) {
+                    $card_url = get_bloginfo('wpurl').'/price-guide/'.$c->permalink.'/'.$c->api_id.'/';
+                    $card_set_name = !empty($c->card_set_name) ? $c->card_set_name : '';
+
+                    $content .= '<li class="related-cards__item">';
+                        $content .= '<a class="related-cards__link" href="'.esc_url($card_url).'">';
+                            $content .= '<span class="related-cards__media">';
+                                $content .= '<img src="'.esc_url($c->image_large).'" alt="'.esc_attr(related_code_card_alt($c)).'" loading="lazy" decoding="async" />';
+                            $content .= '</span>';
+                            $content .= '<span class="related-cards__content">';
+                                $content .= '<span class="related-cards__title">'.esc_html($c->name).'</span>';
+                                if ($card_set_name !== '') {
+                                    $content .= '<span class="related-cards__meta">'.esc_html($card_set_name).'</span>';
+                                }
+                            $content .= '</span>';
+                        $content .= '</a>';
+                    $content .= '</li>';
+                }
+            $content .= '</ul>';
+        $content .= '</div>';
+    $content .= '</section>';
     
     echo $content;
        

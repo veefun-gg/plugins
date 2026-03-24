@@ -31,11 +31,14 @@ function getCustomCSS2() {
         wp_enqueue_style( str_replace(".","_",strtolower(basename($filename))) );
 	}
 
-    wp_register_script( 'slickJS', '//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js', 'jquery-core', '1.0', array('in_footer' => true) );
-    wp_enqueue_script( 'slickJS' );
-
-    wp_register_style( 'slickCSS', '//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css' );
-    wp_enqueue_style( 'slickCSS' );
+    wp_register_script(
+        'ptp_related_cards_rail',
+        $plugin_weburl.'js/related-cards-rail.js',
+        array(),
+        '1.0.0',
+        true
+    );
+    wp_enqueue_script( 'ptp_related_cards_rail' );
 	
 }
 	
