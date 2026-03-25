@@ -305,9 +305,6 @@
     height: 18px;
     width: 18px;
     margin: 0;
-    display: inline;
-    z-index: 1;
-    flex: none;
 }
 
 .types label {
@@ -316,7 +313,6 @@
     line-height: 18px;
     padding: 0 15px 0 0;
     display: inline-block;
-    align-items: center;
 }
 
 .pg-list {
@@ -379,6 +375,16 @@
     color: #000;
 }
 
+.pg-list .card a:focus-visible,
+.pg-list .btn:focus-visible,
+.pgoptions:focus-visible,
+.types input:focus-visible,
+.pagination .item:focus-visible {
+    outline: 2px solid #2271b1 !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(34,113,177,0.2);
+}
+
 .pg-list .card h3 {
     font-size: 20px;
     margin-bottom: 5px;
@@ -432,9 +438,11 @@
     font-size: 20px;
     color: #333;
     cursor: pointer;
+    text-decoration: none;
 }
 
-.pagination .item:hover {
+.pagination .item:hover,
+.pagination .item:focus-visible {
     background: #E1E1E1;
 }
 
