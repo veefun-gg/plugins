@@ -22,14 +22,15 @@ global $plugin_weburl,$wpdb;
     <div class="pg-list grid">
         
         <div class="loading">
-            <img src="<?php echo $plugin_weburl; ?>images/loader.gif" />
+            <img src="<?php echo $plugin_weburl; ?>images/loader.gif" alt="" />
         </div>
 
         <script type="text/javascript">
         jQuery(document).ready(function() {
+            var filterSelectors = "#options_perpage, #options_gridlist, #options_set, #options_order";
 
             function getCards(offset) {
-                
+                jQuery("#pgresults").attr("aria-busy", "true");
                 jQuery('.loading').show();
                 var perpage = jQuery("#options_perpage").val();
                 var gridlist = jQuery("#options_gridlist").val();
@@ -47,27 +48,13 @@ global $plugin_weburl,$wpdb;
                 var set = '<?php echo urldecode($set); ?>';
                 <?php } ?>
                 var order = jQuery("#options_order").val();
-                
-                var cardIds = [];
 
                 jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>templates/get-list.php", data: "name=<?php echo $pname; ?>&offset="+offset+"&perpage="+perpage+"&gridlist="+gridlist+"&order="+order+"&set="+encodeURIComponent(set)+"&type="+encodeURIComponent(type), success: function(data)
                 {
 
                     jQuery("#pgresults").html(data);
                     jQuery('.loading').fadeOut();
-                    
-                    jQuery(".card").each(function() {
-                        
-                        var thisId = jQuery(this).data("id");
-                        //console.log(thisId);
-                        //updateCardsPricing(thisId,"list");
-                        cardIds.push(thisId);
-                        
-                    });
-                    
-                    //console.log(cardIds);
-                    //updateCardsPricingGroup(cardIds,"list");
-                    //console.log(results);
+                    jQuery("#pgresults").attr("aria-busy", "false");
 
                 }
                 });
@@ -80,36 +67,24 @@ global $plugin_weburl,$wpdb;
             }
             getCards(offset);
             
-            jQuery("#options_perpage").on("change", function() {
-                getCards(offset);
-            });
-            
-            jQuery("#options_type").on("change", function() {
+            jQuery(filterSelectors).on("change", function() {
                 getCards(offset);
             });
             
             jQuery(document.body).on("change","input[name='type']", function() {
                 getCards(offset);
             });
-            
-            jQuery("#options_gridlist").on("change", function() {
-                getCards(offset);
-            });
-            
-            jQuery("#options_set").on("change", function() {
-                getCards(offset);
-            });
-            
-            jQuery("#options_order").on("change", function() {
-                getCards(offset);
-            });
-            
-            jQuery(document.body).on("click",".pagination .item", function() {
-        
-                var thisPage = jQuery(this).data("page");
+
+            function activatePageItem(pageItem) {
+                var thisPage = pageItem.data("page");
+
+                if(pageItem.hasClass("disabled") || !thisPage) {
+                    return;
+                }
+
                 getCards(thisPage);
 
-                if(!jQuery(this).hasClass("prev") && !jQuery(this).hasClass("next")) {
+                if(!pageItem.hasClass("prev") && !pageItem.hasClass("next")) {
 
                     jQuery(".pagination .item").each(function() {
 
@@ -117,14 +92,27 @@ global $plugin_weburl,$wpdb;
 
                     });
 
-                    jQuery(this).addClass("current");
+                    pageItem.addClass("current");
 
                 }
 
-                jQuery([document.documentElement, document.body]).animate({
-                    scrollTop: jQuery(".results").offset().top - 140
-                }, 750);
+                if(jQuery(".results").length) {
+                    jQuery([document.documentElement, document.body]).animate({
+                        scrollTop: jQuery(".results").offset().top - 140
+                    }, 750);
+                }
+            }
 
+            jQuery(document.body).on("click",".pagination .item", function(e) {
+                e.preventDefault();
+                activatePageItem(jQuery(this));
+            });
+
+            jQuery(document.body).on("keydown",".pagination .item", function(e) {
+                if(e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    activatePageItem(jQuery(this));
+                }
             });
 
         });
@@ -146,22 +134,7 @@ global $plugin_weburl,$wpdb;
             <option value="grid"<?php if($_SESSION['gridlist'] == 'grid') {  ?> selected="selected"<?php } ?>>Grid View</option>
             <option value="list"<?php if(!$_SESSION['gridlist'] || $_SESSION['gridlist'] == 'list') {  ?> selected="selected"<?php } ?>>List View</option>
         </select>
-        
-        <?php /* ?><select class="pgoptions" id="options_type">
-            <option value=""<?php if(!$_SESSION['type']) {  ?> selected="selected"<?php } ?>>All Types</option>
-            <?php
-            $set = "SELECT DISTINCT type FROM ".$wpdb->prefix."ptp_cache_card_types ORDER BY type ASC";
-            $sets = $wpdb->get_results($set);
-            $c = 0;
-            foreach($sets as $s) {
-            ?>
-            <option value="<?php echo $s->type; ?>"<?php if($_SESSION['type'] == $s->type) {  ?> selected="selected"<?php } ?>><?php echo $s->type; ?></option>
-            <?php
-            $c++;
-            }
-            ?>
-        </select><?php */ ?>
-        
+
         <?php if($pname == '' && $set == '') { ?>
         
         <select class="pgoptions" id="options_set">
@@ -182,7 +155,7 @@ global $plugin_weburl,$wpdb;
         
         <?php } ?>
 
-        <div id="pgresults">
+        <div id="pgresults" aria-live="polite" aria-busy="true">
         
             <?php
             $x = 1;
@@ -191,7 +164,7 @@ global $plugin_weburl,$wpdb;
             ?>
                 
                 <div class="fifth card">
-                    <img src="<?php echo $plugin_weburl; ?>images/preview.jpg" style="opacity: 0.1;" />    
+                    <img src="<?php echo $plugin_weburl; ?>images/preview.jpg" alt="" style="opacity: 0.1;" />    
                     <h3>
                         Pokemon
                     </h3>
@@ -203,7 +176,7 @@ global $plugin_weburl,$wpdb;
                 
                 <div class="full card">
                     <div class="quarter quarters">
-                        <img src="<?php echo $plugin_weburl; ?>images/preview.jpg" style="opacity: 0.1;" />    
+                        <img src="<?php echo $plugin_weburl; ?>images/preview.jpg" alt="" style="opacity: 0.1;" />    
                     </div>
                     <div class="threequarters desc">
                         <h3>Pokemon</h3>
