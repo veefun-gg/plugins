@@ -456,18 +456,22 @@
 --------------------------------------------*/
 
 .related-cards {
-    width: 100%;
-    height: auto;
-    display: block;
+    --related-cards-gap: 18px;
+    --related-cards-control-size: 52px;
+    --related-cards-surface: rgba(0,90,164,0.9);
+    --related-cards-surface-active: #CC0000;
+    --related-cards-shadow: 0 10px 24px rgba(0,0,0,0.28);
+    --related-cards-shadow-hover: 0 14px 26px rgba(0,0,0,0.34);
+    --related-cards-shadow-active: 0 14px 28px rgba(0,0,0,0.34);
+    --related-cards-shadow-active-hover: 0 16px 30px rgba(0,0,0,0.38);
     margin: 20px 0;
-    padding-bottom: 0;
 }
 
 .related-cards__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--related-cards-gap);
     margin-bottom: 16px;
 }
 
@@ -482,21 +486,24 @@
 .related-cards__controls {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 10px;
     flex-shrink: 0;
 }
 
 .related-cards__control {
-    min-width: 52px;
-    min-height: 52px;
+    inline-size: var(--related-cards-control-size);
+    block-size: var(--related-cards-control-size);
     border: 0;
     border-radius: 12px;
-    background: rgba(0,90,164,0.9);
+    background: var(--related-cards-surface);
     color: #FFF;
     cursor: pointer;
     font-size: 26px;
     line-height: 1;
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
@@ -522,13 +529,19 @@
     width: 100%;
 }
 
+.related-cards__viewport:focus-visible {
+    outline: 2px solid #005AA4;
+    outline-offset: 4px;
+    border-radius: 16px;
+}
+
 .related-cards__list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 18px;
+    gap: var(--related-cards-gap);
 }
 
 .related-cards__item {
@@ -536,8 +549,8 @@
 }
 
 .related-cards__item.is-active .related-cards__link {
-    background: #CC0000;
-    box-shadow: 0 14px 28px rgba(0,0,0,0.34);
+    background: var(--related-cards-surface-active);
+    box-shadow: var(--related-cards-shadow-active);
 }
 
 .related-cards__link {
@@ -546,10 +559,11 @@
     flex-direction: column;
     border-radius: 14px;
     overflow: hidden;
-    background: #005AA4;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+    background: var(--related-cards-surface);
+    box-shadow: var(--related-cards-shadow);
     color: #FFF;
     text-decoration: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .related-cards__link:hover,
@@ -557,12 +571,12 @@
     color: #FFF;
     text-decoration: none;
     transform: translateY(-2px);
-    box-shadow: 0 14px 26px rgba(0,0,0,0.34);
+    box-shadow: var(--related-cards-shadow-hover);
 }
 
 .related-cards__item.is-active .related-cards__link:hover,
 .related-cards__item.is-active .related-cards__link:focus-visible {
-    box-shadow: 0 16px 30px rgba(0,0,0,0.38);
+    box-shadow: var(--related-cards-shadow-active-hover);
 }
 
 .related-cards__link:focus-visible {
@@ -589,8 +603,8 @@
 
 .related-cards__content {
     display: grid;
-    gap: 4px;
-    padding: 12px 14px 16px;
+    gap: 6px;
+    padding: 14px 16px 16px;
 }
 
 .related-cards__title {
@@ -610,8 +624,12 @@
 --------------------------------------------*/
 
 @media (max-width: 1024px) {
+    .related-cards {
+        --related-cards-gap: 14px;
+    }
+
     .related-cards__header {
-        align-items: flex-start;
+        align-items: stretch;
         flex-direction: column;
     }
 
@@ -627,17 +645,18 @@
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 6px;
+        overscroll-behavior-x: contain;
+        scroll-padding-inline: var(--related-cards-gap);
         scrollbar-width: thin;
     }
 
     .related-cards__list {
         display: flex;
         flex-wrap: nowrap;
-        gap: 14px;
     }
 
     .related-cards__item {
-        flex: 0 0 clamp(168px, 44vw, 232px);
+        flex: 0 0 clamp(176px, 42vw, 232px);
         scroll-snap-align: start;
     }
     
@@ -684,11 +703,21 @@
     }
 
     .related-cards__control {
-        min-width: 48px;
-        min-height: 48px;
+        --related-cards-control-size: 48px;
     }
 
     .related-cards__item {
         flex-basis: min(78vw, 230px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .related-cards__control,
+    .related-cards__link {
+        transition: none;
+    }
+
+    .related-cards__viewport {
+        scroll-behavior: auto;
     }
 }

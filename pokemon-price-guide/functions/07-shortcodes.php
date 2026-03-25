@@ -259,7 +259,7 @@ function related_code_card_alt($card) {
 }
 
 function related_code_display($type,$name,$set) {
-global $plugin_weburl,$wpdb;
+global $wpdb;
 
     $parts = preg_split('/\s+/', trim($name));
     $search_term = !empty($parts[0]) ? $parts[0] : $name;
@@ -280,8 +280,8 @@ global $plugin_weburl,$wpdb;
     $content = '<section class="related-cards" data-related-cards aria-labelledby="'.esc_attr($heading_id).'">';
         $content .= '<div class="related-cards__header">';
             $content .= '<h2 class="related-cards__heading" id="'.esc_attr($heading_id).'">Cards Like '.esc_html($name).'</h2>';
-            $content .= '<div class="related-cards__controls" data-related-cards-controls hidden>';
-                $content .= '<button class="related-cards__control related-cards__control--page-prev" type="button" data-related-cards-page-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Previous cards" disabled hidden>';
+            $content .= '<div class="related-cards__controls" data-related-cards-controls role="group" aria-label="Related card navigation" hidden>';
+                $content .= '<button class="related-cards__control related-cards__control--page-prev" type="button" data-related-cards-page-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Jump backward several cards" disabled hidden>';
                     $content .= '<span aria-hidden="true">&laquo;</span>';
                 $content .= '</button>';
                 $content .= '<button class="related-cards__control related-cards__control--prev" type="button" data-related-cards-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Previous card" disabled>';
@@ -290,7 +290,7 @@ global $plugin_weburl,$wpdb;
                 $content .= '<button class="related-cards__control related-cards__control--next" type="button" data-related-cards-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Next card" disabled>';
                     $content .= '<span aria-hidden="true">&rarr;</span>';
                 $content .= '</button>';
-                $content .= '<button class="related-cards__control related-cards__control--page-next" type="button" data-related-cards-page-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Next cards" disabled hidden>';
+                $content .= '<button class="related-cards__control related-cards__control--page-next" type="button" data-related-cards-page-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Jump forward several cards" disabled hidden>';
                     $content .= '<span aria-hidden="true">&raquo;</span>';
                 $content .= '</button>';
             $content .= '</div>';
