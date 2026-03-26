@@ -1,20 +1,20 @@
 <?php
 /**
- * Plugin-owned archive shell for the Pokedex post type.
+ * Plugin-owned taxonomy shell for the Pokedex type taxonomy.
  */
 
 get_header();
 
-$archive_description = get_the_archive_description();
+$term_description = term_description();
 ?>
 
 <main id="main" class="site-main pokedex-archive-main" role="main">
 	<header class="page-header pokedex-archive-header">
-		<h1 class="page-title"><?php post_type_archive_title(); ?></h1>
+		<h1 class="page-title"><?php single_term_title(); ?></h1>
 
-		<?php if ( ! empty( $archive_description ) ) : ?>
+		<?php if ( ! empty( $term_description ) ) : ?>
 			<div class="taxonomy-description">
-				<?php echo wp_kses_post( $archive_description ); ?>
+				<?php echo wp_kses_post( $term_description ); ?>
 			</div>
 		<?php endif; ?>
 	</header>

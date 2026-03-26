@@ -24,7 +24,8 @@ add_action('wp_enqueue_scripts', 'pokedex_awesome_icons');
 add_action('wp_enqueue_scripts', 'pokedex_custom', 100);
 add_filter( 'single_template', 'set_pokedex_single_template' );
 add_filter( 'archive_template', 'set_pokedex_archive_template' );
-add_filter( 'search_template', 'set_pokedex_search_template' );
+add_filter( 'taxonomy_template', 'set_pokecategory_template' );
+add_action( 'pre_get_posts', 'set_pokedex_archive_order' );
 
 // ADMIN MENU AND PAGES
 // Add custom taxonomy for Pokémon
@@ -155,39 +156,61 @@ function set_pokedex_single_template( $single_template ) {
     return $single_template;
 }
 function set_pokedex_archive_template( $archive_template ) {
-    global $post;
-    if ( is_archive() && 'pokedex' === $post->post_type ) { $archive_template = dirname( __FILE__ ) . '/templates/archive-pokedex.php'; }
+    if ( is_post_type_archive( 'pokedex' ) ) { $archive_template = dirname( __FILE__ ) . '/templates/archive-pokedex.php'; }
     return $archive_template;
 }
-function set_pokedex_search_template( $search_template ) {
-    global $wp_query;
-    if ( $wp_query->is_search ) { $search_template = dirname( __FILE__ ) . '/templates/archive-pokedex.php'; }
-    return $search_template;
+function set_pokecategory_template( $taxonomy_template ) {
+    if ( is_tax( 'pokecategory' ) ) { $taxonomy_template = dirname( __FILE__ ) . '/templates/taxonomy-pokecategory.php'; }
+    return $taxonomy_template;
 }
-function changeSearchSort( $orderby, $query ){
-    global $wpdb;
 
-    if(!is_admin()) {
-        if(is_search() || is_archive()) {
-            $orderby =  $wpdb->prefix."posts.post_title ASC";
-        }
-    }
-    return  $orderby;
+function pokedex_is_frontend_context() {
+    return is_singular( 'pokedex' ) || is_post_type_archive( 'pokedex' ) || is_tax( 'pokecategory' );
 }
-add_filter('posts_orderby','changeSearchSort',10,2);
+
+function pokedex_is_archive_context( $query = null ) {
+    if ( null === $query ) {
+        return is_post_type_archive( 'pokedex' ) || is_tax( 'pokecategory' );
+    }
+
+    if ( ! ( $query instanceof WP_Query ) ) {
+        return false;
+    }
+
+    return $query->is_post_type_archive( 'pokedex' ) || $query->is_tax( 'pokecategory' );
+}
+
+function set_pokedex_archive_order( $query ) {
+    if ( is_admin() || ! $query->is_main_query() || ! pokedex_is_archive_context( $query ) ) {
+        return;
+    }
+
+    $query->set( 'orderby', 'title' );
+    $query->set( 'order', 'ASC' );
+}
 
 
 // ENQUEUE
 // Add custom scripts and styles to pokedex pages
 function pokedex_custom_js() { 
+    if ( ! is_singular( 'pokedex' ) ) {
+        return;
+    }
+
     wp_enqueue_script( 'pokedex_scripts', plugin_dir_url( __FILE__ ) . 'dist/js/primetime-pokedex.js', array('jquery'), '1.0', true );
 }
 function pokedex_custom(){
-    /*if( is_singular('pokedex') ){*/
-        wp_enqueue_style('pokedex_custom_css', plugins_url("/dist/css/pokedex.css", __FILE__), array(), '1.2.3');
-    /*}*/
+    if ( ! pokedex_is_frontend_context() ) {
+        return;
+    }
+
+    wp_enqueue_style('pokedex_custom_css', plugins_url("/dist/css/pokedex.css", __FILE__), array(), '1.2.3');
 }
 function pokedex_awesome_icons(){
+    if ( ! is_singular( 'pokedex' ) ) {
+        return;
+    }
+
     wp_enqueue_script('pokedex_icons', 'https://kit.fontawesome.com/4170135a74.js');
 }
 
@@ -218,6 +241,31 @@ function array_depth($arr) {
     }
     return $depth;
 }
+
+function pokedex_get_archive_card_id( $post_id ) {
+    return get_post_meta( $post_id, 'pokemon_id', true );
+}
+
+function pokedex_get_archive_card_title( $post_id ) {
+    $pokemon_name = get_post_meta( $post_id, 'pokemon_name', true );
+
+    if ( ! empty( $pokemon_name ) ) {
+        return $pokemon_name;
+    }
+
+    return get_the_title( $post_id );
+}
+
+function pokedex_get_archive_card_image_url( $post_id ) {
+    $image_url = get_the_post_thumbnail_url( $post_id, 'thumbnail' );
+
+    if ( ! empty( $image_url ) ) {
+        return $image_url;
+    }
+
+    return get_post_meta( $post_id, 'pokemon_image', true );
+}
+
 // Debug array
 function dbug($incoming, string $string = "Dbug") {
     echo "<b>$string:</b><br/><pre>"; print_r($incoming); echo "</pre><br/><br/>";
