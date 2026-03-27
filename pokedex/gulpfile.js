@@ -8,10 +8,16 @@ const concat = require('gulp-concat');
 const rename = require('gulp-rename');
 const uglify = require('gulp-uglify');
 
-var cssDest = './dist/css';
+const cssDest = './dist/css';
+const cssEntry = './src/styl/pokedex.styl';
+const cssWatchGlobs = './src/styl/**/*.styl';
+const phpWatchGlobs = './**/*.php';
 
-gulp.task('stylus', function(){
-	return gulp.src('./src/styl/pokedex.styl')
+// Supported CSS contract:
+//   source: src/styl/pokedex.styl
+//   runtime output: dist/css/pokedex.css
+function buildCss() {
+	return gulp.src(cssEntry)
 		.pipe(sourcemaps.init())
         .pipe(stylus())
 		//.pipe(changed(cssDest))
@@ -24,18 +30,28 @@ gulp.task('stylus', function(){
 		.pipe(sourcemaps.write())
         .pipe(gulp.dest(cssDest))
         .pipe(browserSync.stream())
-});
+}
 
-gulp.task('browser-sync', function() {
+function initBrowserSync() {
   browserSync.init({
     proxy: "https://primetime-pokedex.local/"
   });
-});
+}
 
-gulp.task('watch', function(){
-    gulp.watch('src/styl/**/*.styl', gulp.series('stylus'));
-    gulp.watch('**/*.php').on('change', browserSync.reload);
-    gulp.watch('../../themes/matthew-child/**/*.php').on('change', browserSync.reload);
-});
+function watchCss() {
+    return gulp.watch(cssWatchGlobs, buildCss);
+}
 
-gulp.task('default', gulp.parallel('stylus','browser-sync','watch'));
+function watchFiles() {
+    watchCss();
+    gulp.watch(phpWatchGlobs).on('change', browserSync.reload);
+}
+
+exports.buildCss = buildCss;
+exports.watchCss = watchCss;
+exports.stylus = buildCss;
+exports['build-css'] = buildCss;
+exports['watch-css'] = watchCss;
+exports['browser-sync'] = initBrowserSync;
+exports.watch = watchFiles;
+exports.default = gulp.parallel(buildCss, initBrowserSync, watchFiles);
