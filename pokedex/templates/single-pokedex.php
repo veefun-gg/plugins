@@ -1,0 +1,797 @@
+<?php
+
+/**
+
+ * @package storefront
+
+ */
+
+
+
+get_header(); 
+
+
+
+function hokepoke($key) { 
+
+	return get_post_meta( get_the_ID(), $key, true );
+
+}
+
+
+function remoteFileExists($url) {
+    $curl = curl_init($url);
+
+    //don't fetch the actual page, you only want to check the connection is ok
+    curl_setopt($curl, CURLOPT_NOBODY, true);
+
+    //do request
+    $result = curl_exec($curl);
+
+    $ret = false;
+
+    //if request did not fail
+    if ($result !== false) {
+        //if request was ok, check response code
+        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);  
+
+        if ($statusCode == 200) {
+            $ret = true;   
+        }
+    }
+
+    curl_close($curl);
+
+    return $ret;
+}
+
+
+// Pokemon Details
+
+
+
+// Incoming as basic string...
+
+$category = 			hokepoke('pokemon_category');
+
+$gender = 				hokepoke('pokemon_gender');
+
+$height = 				hokepoke('pokemon_height');
+
+$current_image = 		hokepoke('pokemon_image');
+
+$exists = remoteFileExists($current_image);
+if (!$exists) {
+    $file_name = basename($current_image);
+    $current_image = get_bloginfo('url').'/wp-content/plugins/primetime-pokedex/pokeimg/'.$file_name;
+} 
+
+$current_id =			hokepoke('pokemon_id');
+
+$current_name =			hokepoke('pokemon_name');
+
+$current_name_alt =		hokepoke('pokemon_name_alt');
+
+$next = 				hokepoke('pokemon_next');
+
+$next_class = 			hokepoke('pokemon_next_class');
+
+$next_image = 			hokepoke('pokemon_next_image');
+
+$prev = 				hokepoke('pokemon_prev');
+
+$prev_class = 			hokepoke('pokemon_prev_class');
+
+$prev_image = 			hokepoke('pokemon_prev_image');
+
+$stat_attack = 			hokepoke('pokemon_stat_attack');
+
+$stat_defense = 		hokepoke('pokemon_stat_defense');
+
+$stat_hp = 				hokepoke('pokemon_stat_hp');
+
+$stat_sattack = 		hokepoke('pokemon_stat_special-attack');
+
+$stat_sdefense = 		hokepoke('pokemon_stat_special-defense');
+
+$stat_speed = 			hokepoke('pokemon_stat_speed');
+
+$weight = 				hokepoke('pokemon_weight');
+
+$desc_shield = 	    	hokepoke('pokemon_desc_shield');
+
+$desc_sword = 	    	hokepoke('pokemon_desc_sword');
+
+$desc = 				hokepoke('pokemon_desc_default');
+
+$habitat = 				hokepoke('pokemon_habitat');
+
+$growth_rate =	    	hokepoke('pokemon_growth_rate');
+
+$is_baby =          	hokepoke('pokemon_is_baby');
+
+$is_legendary =     	hokepoke('pokemon_is_legendary');
+
+$is_mythical =      	hokepoke('pokemon_is_mythical');
+
+$hatch_time =       	hokepoke('pokemon_hatch_time');
+
+
+
+// Incoming as comma-seperated list...
+
+$abilities = 			hokepoke('pokemon_abilities'); 
+
+$abilities_hidden = 	hokepoke('pokemon_abilities_hidden');
+
+$evolutions = 			hokepoke('pokemon_evolution_chain');
+
+//$evolution_classes =	hokepoke('pokemon_evolution_class');
+
+//$evolution_images = 	hokepoke('pokemon_evolution_image');
+
+//$evolution_ids = 	    hokepoke('pokemon_evolution_id');
+
+$types = 				hokepoke('pokemon_type');
+
+$weaknesses = 			hokepoke('pokemon_weakness');
+
+// ...convert lists to arrays...
+
+$abilities =	 		explode(",", $abilities);
+
+$abilities_hidden = 	explode(",", $abilities_hidden);
+
+//$chain = 				explode(",", $evolutions);
+
+//$chain_classes = 		explode(",", $evolution_classes);
+
+//$chain_images =	 		explode(",", $evolution_images);
+
+//$chain_ids =	 		explode(",", $evolution_ids);
+
+$types = 				explode(",", $types);
+
+$weaknesses = 			explode(",", $weaknesses);
+
+
+
+// Set prev/next IDs
+
+if($current_id == 1025) { $next_id = 1; }
+
+else { $next_id = $current_id + 1; }
+
+if($current_id == 1) { $prev_id = 1025; }
+
+else { $prev_id = $current_id - 1; }
+
+
+
+// POKESTATS
+
+// Create stats block
+
+function pokestats(	$atk, $def, $hp, $satk, $sdef, $spd ) {
+
+	$stats = array();
+
+	array_push($stats, $atk, $def, $hp, $satk, $sdef, $spd);
+
+	echo '<ul class="clean-list">';
+
+		for($i = 0; $i < count($stats); $i++) {
+
+			if($i == 0) 	{ $stat_title = 'HP'; $stats_class = 'hp'; }
+
+			elseif($i == 1) { $stat_title = 'Attack'; $stats_class = 'atk'; }
+
+			elseif($i == 2) { $stat_title = 'Defense'; $stats_class = 'def'; }
+
+			elseif($i == 3) { $stat_title = 'S-Atk'; $stats_class = 'satk'; }
+
+			elseif($i == 4) { $stat_title = 'S-Def'; $stats_class = 'sdef'; }
+
+			elseif($i == 5) { $stat_title = 'Speed'; $stats_class = 'spd'; }
+
+			$stat = $stats[$i];
+
+			$statPerc = 150 * ($stat / 255);
+
+
+
+			echo '<li class="poke-stats-item">';
+
+				echo "<div class='poke-stats-bar-fill'><span class='poke-stats-$stats_class' style='height:" . $statPerc . "%;'></span></div>";
+
+				echo '<span class="poke-stats-item-amount">' . $stats[$i] . '</span>';
+
+				echo '<span class="poke-stats-item-title">' . $stat_title . '</span>';
+
+			echo '</li>';
+
+		}
+
+	echo '</ul>';
+
+}
+
+
+
+// POKETYPES
+
+// Create types block
+
+function poketypes( $types ) {
+
+	$typeIcon = '';
+
+	$typeColor = '';
+
+	$typeColors = array();
+
+    // this below line added to override css of svg icons to match whatever is coming from icons before
+	echo '<style>ul.poke-pills li .icon svg { max-width:30px; max-height:30px; fill:#fff; width:30px;}</style>';
+
+	echo '<ul class="poke-pills clean-list">';
+
+		foreach($types as $type) {
+
+			$type = sanitize_title($type);
+
+            if($type == 'bug')      { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm-24.6 343.7A152.3 152.3 0 0 1 205.4 400c-2.6 3.2-2.6 3.2-6.1 1.6a136.6 136.6 0 0 1 -69.4-69.1 133.4 133.4 0 0 1 -12.5-65.9 137.9 137.9 0 0 1 40.6-89.6c2.9-2.6 2.9-2.9 5.4 0a134.7 134.7 0 0 0 25.9 22.7A107.5 107.5 0 0 0 227.2 216a7.4 7.4 0 0 1 6.4 5.8 209.3 209.3 0 0 1 10.9 43.8v17.9a204.2 204.2 0 0 1 -13.1 76.2zM185.3 160c-2.9-2.9-2.9-3.2 0-5.1A134.1 134.1 0 0 1 208 144.3l4.8-1.9c2.6 0 2.6 0 0-3.5a11.2 11.2 0 0 1 0-2.6L192 111a18.2 18.2 0 0 1 0-4.2A8.6 8.6 0 0 1 193.6 96a9 9 0 0 1 11.5 0 54.7 54.7 0 0 1 3.5 4.5l25 33.9a7 7 0 0 0 7 3.2 98.9 98.9 0 0 1 32 0 7.4 7.4 0 0 0 7.4-3.2l24-34.6 2.9-3.8A9.3 9.3 0 0 1 320 96a8.3 8.3 0 0 1 2.2 11.2l-2.2 3.5-19.5 25.9a11.2 11.2 0 0 1 0 2.6c-1.9 2.9-1.9 2.9 0 4.2h4.5a148.2 148.2 0 0 1 22.7 10.9c3.5 2.2 3.5 2.2 0 5.1A93.1 93.1 0 0 1 256 192a91.5 91.5 0 0 1 -70.7-32zm132.5 238.4l-4.8 2.2c-3.8 1.9-3.8 1.9-6.7 0a160 160 0 0 1 -38.4-87.4 192 192 0 0 1 -1.9-28.5 189.4 189.4 0 0 1 12.5-64 4.8 4.8 0 0 1 4.2-3.5 96 96 0 0 0 13.8-3.8 121 121 0 0 0 49-32l2.2-2.2c2.9-3.5 2.9-3.5 6.1 0a135.4 135.4 0 0 1 35.5 59.5 138.2 138.2 0 0 1 -71.4 160.3z"/></svg>'; $typeColor = '#E8AA33'; }
+
+            if($type == 'dark')     { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M378.2 257.9a132.5 132.5 0 0 1 -140.5 122.6 157.1 157.1 0 0 1 -21.4-1.6A143.7 143.7 0 0 0 224 136h15.4a132.2 132.2 0 0 1 138.9 121.9zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm0 392.6A152.6 152.6 0 1 1 408.6 256 152.3 152.3 0 0 1 256 408.6z"/></svg>'; $typeColor = '#D50A55'; }
+
+            if($type == 'dragon')   { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M204.5 181.8v8.3a26.6 26.6 0 0 1 -9.3 22.1A50.9 50.9 0 0 1 160 224c-3.2 0-3.5 0 0-3.2a187.2 187.2 0 0 1 39.7-40.6h4.5c.3 0 .3 1 .3 1.6zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm-4.5 405.4h-4.2a246.1 246.1 0 0 1 -40.6-7.7 147.2 147.2 0 0 1 -55.7-32A157.4 157.4 0 0 1 105 304c0-3.2 0-3.2 2.9-3.5a460.8 460.8 0 0 0 65.6-12.5 388.8 388.8 0 0 0 37.1-12.5l4.8-1.9-1.9 2.9c-1.9 3.2-4.2 6.4-6.1 9.9a77.8 77.8 0 0 0 -8.6 53.4 105 105 0 0 0 36.5 64l15.4 13.1zm88-16.3a128 128 0 0 1 -27.5 12.8 9.9 9.9 0 0 1 -8 0 118.4 118.4 0 0 1 -32-21.4 160 160 0 0 1 -28.2-32l-1.9-2.9v-2.2h10.2A66.9 66.9 0 0 0 320 320a69.1 69.1 0 0 0 -28.8-90.9l-3.2-1.3a4.5 4.5 0 0 1 -3.2-6.1v-10.2a38.1 38.1 0 0 0 -9.6-24.6 57 57 0 0 1 4.8 28.2 28.2 28.2 0 0 1 -3.2 11.5 14.4 14.4 0 0 1 -11.5 8.3c-32 5.4-64 13.4-96 21.1c-22.1 5.8-43.8 10.6-65.9 16h-2.6v-2.2c17-26.6 32-54.4 47.4-82.6a20.5 20.5 0 0 1 7.4-8.3c26.6-18.9 51.5-37.1 75.2-57.6a373.4 373.4 0 0 0 52.5-55.4l2.2-1.9H288a18.9 18.9 0 0 1 0 4.2 207 207 0 0 1 -21.4 57.9c-3.8 6.7-3.5 6.7 4.2 7a146.2 146.2 0 0 1 70.7 272.3z"/></svg>'; $typeColor = '#4A4468'; }
+
+            if($type == 'electric') { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm53.4 395.8l-174.7-207H224L192 112h115.8l53.4 165.4H275.2z"/></svg>'; $typeColor = '#F1D941'; }
+
+            if($type == 'fairy')    { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M278.7 234.2L320 256l-40 22.1L256 320l-21.8-41.3-40-22.7 40-22.1L256 194.2zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm105.9 343.4l-56.6-16.6L256 432.6l-49.3-89.6-56.6 16.6 16.3-56L79.4 256l87.7-48.3-17-57.9 58.2 17L256 79.4l47.7 87 58.2-17-17 57.9L432.6 256l-87 47.7z"/></svg>'; $typeColor = '#FE9EA0'; }
+
+            if($type == 'fighting') { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zM139.5 356.2a27.5 27.5 0 0 1 0 5.1 6.7 6.7 0 0 1 -6.7 6.7H128a10.9 10.9 0 0 1 -12.2-7.4c-7.4-15-15.4-30.1-23.4-45.1a20.5 20.5 0 0 1 -2.2-8.6v-32a18.6 18.6 0 0 1 1.9-8.3c8.3-16 16.6-32 24.6-48a7.7 7.7 0 0 1 8-4.8h6.4a7.4 7.4 0 0 1 7 7zm265 0a19.5 19.5 0 0 1 0 4.5 7 7 0 0 1 -7 7H166.1c-7.4 0-10.9-1.9-10.9-10.6v-201a7.4 7.4 0 0 1 7.7-7.7h28.8c6.1 0 11.2 3.5 11.2 10.9V224c0 3.5 2.2 8.6 8.3 8.6h3.8a6.4 6.4 0 0 0 7-7v-69.1a7.4 7.4 0 0 1 8.3-8h32c6.1 0 8.6 2.6 8.6 8.6v64a27.5 27.5 0 0 0 0 5.1 6.4 6.4 0 0 0 6.7 6.1 19.2 19.2 0 0 0 6.1 0 6.7 6.7 0 0 0 6.7-6.4 24 24 0 0 0 0-4.8v-64c0-5.8 2.9-8.3 9-8.6h29.8c6.1 0 8.6 2.9 8.6 9v68.8a6.7 6.7 0 0 0 7 6.4 19.5 19.5 0 0 0 6.1 0 6.7 6.7 0 0 0 6.7-6.1v-70.1c0-5.4 2.6-8 8.3-8h32c5.4 0 8 2.6 8.3 8.3z"/></svg>'; $typeColor = '#F75B21'; }
+
+            if($type == 'fire')     { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm109.1 321.6a79.4 79.4 0 0 1 -68.2 32h-12.8c-.6 0 0 0 0-1.9l3.2-2.6a50.6 50.6 0 0 0 17.9-51.5 47.7 47.7 0 0 0 -36.2-37.8 49 49 0 0 0 -59.5 34.9 51.8 51.8 0 0 0 11.5 49.9 80 80 0 0 0 57.6 29.4 138.6 138.6 0 0 0 64-10.6c7.4-2.6 14.4-6.1 21.4-9.3a7.4 7.4 0 0 1 -2.2 4.5A101.1 101.1 0 0 1 303 416a150.1 150.1 0 0 1 -51.8 6.7 133.1 133.1 0 0 1 -106.9-58.6A124.2 124.2 0 0 1 124.2 304a196.5 196.5 0 0 1 15-86.7c0-2.9 2.2-5.4 3.5-8.3s0-2.2 0 0v5.4a213.8 213.8 0 0 0 8.3 64q5.8 9.6 9 19.8s0 1.9 1.9 0 0 0 0-1.9v-26.9a123.8 123.8 0 0 1 32-92.8A187.5 187.5 0 0 1 216 156.8a116.5 116.5 0 0 0 17.9-15.4 59.8 59.8 0 0 0 16-39 113 113 0 0 0 -2.2-27.5 11.5 11.5 0 0 1 0-3.2 160 160 0 0 1 36.8 44.2 88.3 88.3 0 0 1 9.6 47c0 5.1 0 5.1-5.8 6.7a37.4 37.4 0 0 0 -25.9 37.1 36.2 36.2 0 0 0 71.7 7.4 50.9 50.9 0 0 0 0-25c0-4.8-2.9-9.3-4.5-14.1s0-2.2 0-2.9 1.9 0 2.9 0A106.6 106.6 0 0 1 378.6 224a108.8 108.8 0 0 1 -13.4 113.6z"/></svg>'; $typeColor = '#DB2F2F'; }    
+
+            if($type == 'flying')   { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm158.1 122.2a184.3 184.3 0 0 1 -22.4 59.2A121.6 121.6 0 0 1 320 252.8a111 111 0 0 1 -25 3.2 160 160 0 0 1 -39 0 123.5 123.5 0 0 0 60.8 10.9 126.1 126.1 0 0 0 39-9 53.8 53.8 0 0 0 19.2-12.5 4.8 4.8 0 0 1 1.9 0 11.2 11.2 0 0 1 -1.9 4.5 90.6 90.6 0 0 1 -75.5 45.4H278.1h1.6a160 160 0 0 0 22.1 5.1 91.2 91.2 0 0 0 32 0A67.5 67.5 0 0 0 363.5 288s2.2-2.9 4.5-2.6l-2.2 2.6a64 64 0 0 1 -50.2 32 168 168 0 0 1 -17.9 0h-4.2 3.2l7.4 2.2c2.6 0 2.6 0 0 3.5a102.4 102.4 0 0 1 -16.3 25.6 108.2 108.2 0 0 1 -64 37.4 110.4 110.4 0 0 1 -43.8-210.6 119 119 0 0 1 25.9-2.9H256a327 327 0 0 0 89.6-13.8 142.4 142.4 0 0 0 25-10.6 101.4 101.4 0 0 0 32-30.1c3.8-5.1 7.4-10.6 10.9-16s0 0 0 1.9a217 217 0 0 1 .6 31.4z"/></svg>'; $typeColor = '#659BD2'; }    
+
+            if($type == 'ghost')    { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M231.4 235.5a34.2 34.2 0 1 1 -55.7-32l2.6-1.9h2.6a46.4 46.4 0 0 0 3.8 13.4 34.2 34.2 0 0 0 42.9 15.7c4.8-.3 4.5 1 3.8 4.8zm95.7-32.3a34.2 34.2 0 1 1 -54.4 33.9v-3.2c0-1 0-3.2 2.9-1.9a33.9 33.9 0 0 0 47.7-27.2v-3.2c0-.3 2.6 1 3.8 1.6zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm108.8 359.7a49.6 49.6 0 0 0 12.5 10.6h1.9l5.1 2.9s1.6 0 0 1.9a185.9 185.9 0 0 1 -54.1 14.7h-46.7a237.4 237.4 0 0 1 -32-2.6 305.6 305.6 0 0 1 -47-11.5 155.8 155.8 0 0 1 -102.4-106.9 148.5 148.5 0 0 1 46.4-146.6 148.2 148.2 0 0 1 85.4-38.7 153.3 153.3 0 0 1 164.5 105.6 147.2 147.2 0 0 1 -32 146.2 32 32 0 0 0 -3.8 5.1 16.3 16.3 0 0 0 2.2 19.2z"/></svg>'; $typeColor = '#BE86C7'; }    
+
+            if($type == 'grass')    { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm125.1 290.2a160 160 0 0 1 -23.7 49.9A122.6 122.6 0 0 1 288 404.5a137.3 137.3 0 0 1 -96-8l-3.2-1.6v-4.5c6.7-10.6 13.4-21.1 19.8-32a8 8 0 0 1 6.7-4.2L288 343.4l26.2-4.2h4.8a6.1 6.1 0 0 0 3.8-5.4 5.8 5.8 0 0 0 -4.2-4.5 11.8 11.8 0 0 0 -5.8 0h-80.6s-2.6 0 0-2.2v-2.6l32-49.9a8.6 8.6 0 0 1 7-4.5l61.4-7h3.2a4.8 4.8 0 0 0 3.2-7 5.4 5.4 0 0 0 -3.8-4.8h-4.8L288 245.1c-7.4 0-5.8 0-2.9-5.8l41.3-65.9a32 32 0 0 0 2.6-4.5 8 8 0 0 0 0-4.5 4.5 4.5 0 0 0 -6.1-4.5 22.4 22.4 0 0 0 -5.1 4.5L264 222.1c-5.1 5.4-4.5 5.4-7 0c-5.4-13.1-10.6-26.2-15.7-39.4l-1.9-4.8a5.4 5.4 0 0 0 -5.8-2.9 5.4 5.4 0 0 0 -3.5 5.4V184l8.6 59.8a9.6 9.6 0 0 1 -2.9 9.3c-13.4 13.8-26.6 27.8-40 41.9l-1.9 2.2c-1.9 .3-1.9 .3-1.9-2.2l-11.2-39-9.6-36.8a11.2 11.2 0 0 0 -3.2-6.1 4.2 4.2 0 0 0 -8 .6 8 8 0 0 0 0 5.4c0 12.8 2.2 25.3 3.5 38.1s2.9 32 4.5 46.7v14.4a6.7 6.7 0 0 1 0 5.4l-28.8 30.1c-2.2 2.6-2.6 2.6-4.8 0a121 121 0 0 1 -27.8-54.4 134.7 134.7 0 0 1 21.4-111 124.8 124.8 0 0 1 38.4-36.5 310.4 310.4 0 0 1 89.6-35.5A512 512 0 0 1 329 104h40.3c3.8 0 3.8 0 4.8 3.5c3.5 13.4 6.4 27.2 8.6 41a512 512 0 0 1 6.1 98.9 236.8 236.8 0 0 1 -7.7 58.9z"/></svg>'; $typeColor = '#78C850'; }    
+
+            if($type == 'ground')   { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zM73.9 348.2L135 190.1h51.5L128 348.2zm94.1 0l79.4-203.8h101.1l78.1 202.9z"/></svg>'; $typeColor = '#6F432A'; }    
+
+            if($type == 'ice')      { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm-8.3 343.7l-85.8 45.1v-90.6l84.2-41.9zm-85.8-62.1L76.5 256l85.4-41.6 85.8 41.6zm85.8-57l-85.4-42.9V107.2l85.4 45.1zm16.6-88.3l85.8-45.1v90.6l-84.2 41.9zm85.8 252.5l-85.8-45.1v-88.3l83.8 41.9zm0-107.2L264.3 256l85.8-41.6 85.4 41.6z"/></svg>'; $typeColor = '#CCDCFF'; }    
+
+            if($type == 'normal')   { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M352 256a96 96 0 1 1 -96-96 96 96 0 0 1 96 96zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm0 390.7A150.1 150.1 0 1 1 406.7 256 150.1 150.1 0 0 1 256 406.7z"/></svg>'; $typeColor = '#A9A47A'; }    
+
+            if($type == 'poison')   { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M339.8 199.4a58.2 58.2 0 0 1 -1.9 78.4 96 96 0 0 1 -44.8 27.8 123.2 123.2 0 0 1 -37.1 5.4 117.4 117.4 0 0 1 -60.2-15.7 76.2 76.2 0 0 1 -32-32 55.4 55.4 0 0 1 0-52.8 81.9 81.9 0 0 1 35.8-32 122.2 122.2 0 0 1 65.6-12.2 118.4 118.4 0 0 1 50.6 15.7 87.4 87.4 0 0 1 24 17.3zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm138.6 291.2a121 121 0 0 1 -27.2 28.5 7 7 0 0 0 -2.9 8.6 64 64 0 0 1 -3.2 42.6 42.9 42.9 0 0 1 -14.7 18.9 32 32 0 0 1 -35.8 0 49.9 49.9 0 0 1 -16-22.1c0-1.6 0-4.2-2.2-4.2s-1.6 2.9-2.2 4.2a43.2 43.2 0 0 1 -14.7 19.8 32 32 0 0 1 -41.9-2.6 40.6 40.6 0 0 1 -12.2-17 13.4 13.4 0 0 0 0-3.2 16 16 0 0 0 0 4.2 57.9 57.9 0 0 1 -11.8 18.2 32 32 0 0 1 -44.5 0 52.8 52.8 0 0 1 -15.4-33.9A56.3 56.3 0 0 1 152 344a4.8 4.8 0 0 0 -2.2-6.1 137.6 137.6 0 0 1 -38.7-40 117.4 117.4 0 0 1 -17-64 121.9 121.9 0 0 1 32-75.2 160 160 0 0 1 79.4-51.5 193.9 193.9 0 0 1 52.2-6.7 175.7 175.7 0 0 1 108.2 36.5 128 128 0 0 1 45.8 64 115.5 115.5 0 0 1 -17 106.2z"/></svg>'; $typeColor = '#66D007'; }    
+
+            if($type == 'psychic')  { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm120.3 272a88 88 0 0 1 -20.8 25.3 101.4 101.4 0 0 1 -51.8 26.9A89 89 0 0 1 224 318.1a75.5 75.5 0 0 1 -24.6-48 73.9 73.9 0 0 1 2.9-35.5 64 64 0 0 1 51.2-42.6 57 57 0 0 1 43.2 6.7A52.2 52.2 0 0 1 320 236.8a40.6 40.6 0 0 1 -32 44.2 33.9 33.9 0 0 1 -17.9 0 32 32 0 0 1 -21.8-25 35.8 35.8 0 0 1 0-13.1c0-2.9 2.6-3.8 5.1-3.2a4.2 4.2 0 0 1 2.6 6.1 19.2 19.2 0 0 0 0 6.1 17.9 17.9 0 0 0 22.4 15.7 24.3 24.3 0 0 0 17.3-37.1 32 32 0 0 0 -22.1-15 37.1 37.1 0 0 0 -41.3 22.1 43.5 43.5 0 0 0 8 48.3 55.4 55.4 0 0 0 68.8 11.5 64 64 0 0 0 34.2-49.9 71.7 71.7 0 0 0 -17.9-58.9A82.6 82.6 0 0 0 275.2 160a96 96 0 0 0 -107.5 61.8 112.3 112.3 0 0 0 -7.7 55.4A118.4 118.4 0 0 0 196.5 352a124.5 124.5 0 0 0 66.2 33.9 166.1 166.1 0 0 0 108.5-17.6 15 15 0 0 1 4.8-1.9 25.3 25.3 0 0 1 -5.8 4.5 163.5 163.5 0 0 1 -69.1 27.8 172.5 172.5 0 0 1 -40.6 2.2 160 160 0 0 1 -87-27.5 132.8 132.8 0 0 1 -55.4-82.6 153.9 153.9 0 0 1 -3.5-43.5A147.2 147.2 0 0 1 136.6 176a134.7 134.7 0 0 1 74.6-57.3 157.8 157.8 0 0 1 55.7-8 137.3 137.3 0 0 1 78.7 28.5 112 112 0 0 1 38.4 54.7 116.2 116.2 0 0 1 -7.7 94.1z"/></svg>'; $typeColor = '#D444A2'; }    
+
+            if($type == 'rock')     { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm-94.1 338.9L89.3 331.2V256l108.8-131.2h144L324.8 241.6l-162.6 112zm110.1 32l-80-25.9 138.6-96 35.8 55zm150.7-110.4L387.5 304l-40.6-55L368 125.1h6.7l47.7 151.4z"/></svg>'; $typeColor = '#87877b'; }    
+
+            if($type == 'steel')    { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 179.5a76.2 76.2 0 1 0 0 152.3 76.2 76.2 0 1 0 0-152.3zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm164.5 240l-81.9 141.1H174.4L91.5 256l82.9-141.4h163.8L420.5 256z"/></svg>'; $typeColor = '#575964'; }
+
+            if($type == 'water')    { $typeIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M314.6 320v4.8a60.5 60.5 0 0 1 -32 52.2 66.9 66.9 0 0 1 -32 8.3A64 64 0 0 1 192 352a56.6 56.6 0 0 1 0-60.8l3.5-3.2v4.2a60.5 60.5 0 0 0 113.9 29.8c2.6-1.9 2.9-3.8 5.1-1.9zM256 16a240 240 0 1 0 240 240A240 240 0 0 0 256 16zm87.7 363.2a111.4 111.4 0 0 1 -80 40.6H256a115.5 115.5 0 0 1 -113.3-90.2 118.7 118.7 0 0 1 6.7-67.2 560.3 560.3 0 0 1 48.6-96l50.9-79 7-9.3h2.9c18.2 29.8 37.8 58.6 56 88.3a551.4 551.4 0 0 1 43.5 85.1A169.9 169.9 0 0 1 369.6 288a113 113 0 0 1 -25.9 91.2z"/></svg>'; $typeColor = '#5D55BF'; }
+
+			$typeClass = sanitize_title($type);
+
+			$type = ucfirst($type);
+
+			array_push($typeColors, $typeColor);
+
+			echo "<a href='/pokedex-type/".strtolower($type)."/'><li class='poke-types-item $typeClass' style='background-color: $typeColor;'>";
+
+                echo "<div class='icon'>$typeIcon</div>";
+
+				echo "<span>$type</span>";
+
+			echo "</li></a>";
+
+		}
+
+	echo '</ul>';
+
+	return $typeColors;
+
+}
+
+
+
+// POKEWEAKS
+
+// Create weaknesses block
+
+function pokeweaks( $weaknesses ) {
+
+	echo '<ul class="poke-pills clean-list">';
+
+		foreach($weaknesses as $weak) {
+
+			$weakClass = sanitize_title($weak);
+
+			$weak = ucfirst($weak);
+
+			echo "<li class='poke-weaks-item $weakClass'>$weak</li>";
+
+		}
+
+	echo '</ul>';
+
+}
+
+
+
+// POKESPELLS
+
+// Create abilities block
+
+function pokespells($spells, $hidden = false) {
+
+	foreach($spells as $spell) {
+
+		$spellClass = sanitize_title($spell);
+
+		//$spell = ucfirst($spell);
+
+		$spell = implode('-', array_map('ucfirst', explode('-', $spell)));
+
+		if($hidden) {
+
+			$spellMeta = "pokemon_ability_hidden_" . $spellClass;
+
+		} else {
+
+			$spellMeta = "pokemon_ability_" . $spellClass;
+
+		}
+
+		$spellDesc = hokepoke($spellMeta);
+
+		//echo "<li class='poke-spells-item $spellClass'><h4>$spell</h4><p>$spellDesc</p></li>";
+		echo "<strong>$spell</strong><p>$spellDesc</p>";
+
+	} 
+
+}
+
+
+
+// POKECHAIN
+
+// Create evolution chain block
+
+/*function pokechain(array $array) {
+
+	echo '<ul class="poke-chain flex-list clean-list">';
+
+
+
+	foreach($array as $item) {
+
+
+
+	}
+
+
+
+	echo '</ul>'
+
+}*/
+
+
+
+// Set number for random button
+
+$pokeRand = rand(1,898);
+
+
+
+?>
+
+
+
+
+
+<a name="Pokedex"></a>
+
+<section id="pokedex">
+
+<nav class="pokenav">
+
+		<div class="pokenav-link pokenev-left">
+
+			<a class="poke-nav-left" href="<?php echo site_url() . '/pokedex/' . $prev_class; ?>" title="<?php echo $prev; ?>">
+
+				<i class="fal fa-long-arrow-left arrow-button"></i>
+
+				<span class="poke-nav-thumb" style="background-image: url('<?php echo $prev_image; ?>');"></span>
+
+			</a>
+
+		</div>
+
+		<h1>
+
+			<span class="poke-name"><sup>#</sup><?php echo $current_id; ?> <b><?php echo $current_name; ?></b></span>
+
+		</h1>
+
+		<div class="pokenav-link pokenav-right">
+
+			<a class="poke-nav-right" href="<?php echo site_url() . '/pokedex/' . $next_class; ?>">
+
+				<i class="fal fa-long-arrow-right arrow-button"></i>
+
+				<span class="poke-nav-thumb" style="background-image: url('<?php echo $next_image; ?>');"></span>
+
+			</a>
+
+		</div>
+
+	</nav>
+
+
+
+	<article id="pokemon"
+
+		class="pokemon-container <?php if($is_baby) : echo ' is-baby'; endif; if($is_legendary) : echo ' is-legendary'; endif; if($is_mythical) : echo ' is-mythical'; endif; ?>">
+
+		<div class="poke-profile">
+
+			<div class="poke-image">
+
+				<!--<div class="swap-button poke-flip">
+
+					<!--i class="fas fa-sync-alt"></i--><!--<i class="fas fa-ellipsis"></i></div>
+
+				<div class="poke-image-description poke-flip">
+
+					<div class="pid-section">
+
+						<?php 
+
+						//echo "<h3>Growth</h3>";
+
+						//echo '<ul class="poke-details-list clean-list">';
+
+						//if(!empty($hatch_time)) {
+
+						//	$hatch_steps = $hatch_time * 255;
+
+						//	echo "<li><span>Hatch Time</span><span>$hatch_time Cycles (~$hatch_steps Steps)</span></li>";
+
+						//}
+
+						//echo "<li><span>Growth Rate</span><span>$growth_rate</span></li>";
+
+						//echo "</ul>";
+
+						?>
+
+					</div>-->
+
+					<!--<div class="poke-stats">
+
+						<?php //pokestats($stat_hp, $stat_attack, $stat_defense, $stat_sattack, $stat_sdefense, $stat_speed); ?>
+
+					</div>-->
+
+				<!--</div>-->
+
+				<div class="poke-image-placeholder"><!--Add class pokeflip to resume card flipping-->
+
+					<div class="shine"></div>
+
+					<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+
+						xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000"
+
+						style="enable-background:new 0 0 1000 1000;" xml:space="preserve">
+
+						<!-- Stroke ring -->
+
+						<circle class="st0" cx="500" cy="500" r="302.8">
+
+							<!--<animateTransform attributeType="xml" attributeName="transform" type="rotate"
+
+								from="0 500 500" to="360 500 500" dur="100s" repeatCount="indefinite" />-->
+
+						</circle>
+
+						<!-- Inner ring -->
+
+						<circle class="st1" cx="500" cy="500" r="237.7">
+
+							<!--<animateTransform attributeType="xml" attributeName="transform" type="rotate"
+
+								from="0 500 500" to="360 500 500" dur="40s" repeatCount="indefinite" />-->
+
+						</circle>
+
+						<!-- Outer ring -->
+
+						<circle class="st2" cx="500" cy="500" r="366.8" transform="rotate(0 500 500)" ;>
+
+							<!--<animateTransform attributeType="xml" attributeName="transform" type="rotate"
+
+								from="0 500 500" to="-360 500 500" dur="50s" repeatCount="indefinite" />-->
+
+						</circle>
+
+					</svg>
+
+					<div class="poke-overview">
+
+						<h1><?php echo $current_name; ?></h1>
+
+						<span class="poke-cat"><?php echo $category; ?></span>
+
+						<?php
+
+							if($is_baby)      { echo "<span class='poke-add'>(Baby)</span>"; }
+
+							if($is_legendary) { echo "<span class='poke-add'>(Legendary)</span>"; }
+
+							if($is_mythical)  { echo "<span class='poke-add'>(Mythical)</span>"; }
+
+						?>
+
+						<span class="poke-id"><sup>#</sup><?php echo $current_id; ?></span>
+
+					</div>
+
+					<img src="<?php echo $current_image; ?>" alt="Pokemon #<?php echo $current_id; ?> <?php echo $current_name; ?>" />
+
+					<div class="poke-stats">
+
+						<?php pokestats($stat_hp, $stat_attack, $stat_defense, $stat_sattack, $stat_sdefense, $stat_speed); ?>
+
+					</div>
+
+				</div>
+
+			</div>
+
+			<div class="poke-summary" style="flex-wrap: wrap;">
+                
+                <h1 class="summary-title">
+                    Pokédex • Pokémon <sup>#</sup><?php echo $current_id; ?> • <?php echo $current_name; ?>
+                </h1>
+
+				<div class="poke-card poke-card-clean poke-description">
+
+					<h2>Pokémon Description</h2>
+
+					<?php
+
+						if($desc_sword) { echo "<p title='Sword'>$desc_sword</p>"; }
+
+						if($desc_shield) { echo "<p title='Shield'>$desc_shield</p>"; }
+
+						if(!$desc_sword && !$desc_shield) { echo "<p>$desc</p>"; }
+
+					?>
+
+				</div>
+
+				<div class="poke-card poke-card-clean poke-types">
+
+					<h2>Pokémon Type</h2>
+
+					<?php 
+
+						$typeColors = poketypes($types);
+
+						if(count($typeColors) > 1) {
+
+							$typeColors = implode(",", $typeColors);
+
+							echo "<style>.poke-image-placeholder, .poke-image-description { background: linear-gradient(to right, $typeColors )!important; }</style>";
+
+						} else {
+
+							$typeColors = implode(",", $typeColors);
+
+							echo "<style>.poke-image-placeholder, .poke-image-description { background: $typeColors!important; }</style>";
+
+						}
+
+					?>
+
+				</div>
+
+				<div class="poke-card poke-card-clean poke-weaks">
+
+					<h2>Weaknesses</h2>
+
+					<?php poketypes($weaknesses); ?>
+
+				</div>
+
+			</div>
+            
+            <div class="clear"></div>
+            
+            <div class="poke-image">
+                
+				<!--php if(count($evolutions) > 1) : -->
+
+				<div class="poke-card poke-card-clean poke-chain">
+
+					<h2>Evolutions</h2>
+
+					<ul class="poke-chain flex-list clean-list">
+
+					<?php
+
+						foreach($evolutions as $array) {
+
+							echo "<li class='poke-chain-link'>";
+
+							echo "<ul>";
+
+							foreach($array as $pokemon) {
+
+								echo "<li class='poke-chain-item";
+
+								$chain_title = $pokemon[0];
+
+								$chain_url = $pokemon[0];
+
+								$chain_id = explode(" ", $chain_title);
+
+								//$chain_id= sanitize_title($chain_id);
+
+								print_r($chain_id);
+
+								if($chain_id == $current_id ) {
+
+								  echo ' current';
+
+								}
+
+								echo "'>";
+
+								echo '<a href="' . site_url() . '/pokedex/' . sanitize_title($chain_title) . '">';
+
+								echo '<div class="poke-chain-link-image"><img src="' . $pokemon[1] . '" /><i class="fas fa-chevron-double-right arrow-chain-icon"></i></div>';
+
+								echo "<h5>$chain_title</h5>";
+
+								
+
+								echo "</a>";
+
+								echo "</li>";
+
+							}
+
+							echo "</ul>";
+
+							echo "</li>";
+
+						}
+
+					?>
+
+					</ul>
+
+				</div>
+
+				<!--php endif; -->
+                
+            </div>
+            
+            <div class="poke-summary">
+
+				<div class="poke-card poke-card-clean poke-details">
+
+					<h2>Pokémon Details</h2>
+
+					<ul class="poke-details-list clean-list">
+
+						<li><span>Height</span><span><?php echo $height; ?></span></li>
+
+						<li><span>Weight</span><span><?php echo $weight; ?></span></li>
+
+						<li><span>Gender</span><span><?php echo $gender; ?></span></li>
+
+						<?php if(!empty($habitat)) : ?>
+
+						<li><span>Habitat</span><span><?php echo $habitat; ?></span></li>
+
+						<?php endif; ?>
+
+					</ul>
+
+				</div>
+                
+            </div>
+            
+            <div class="clear"></div>
+            
+            <div class="poke-image">
+
+				<?php if(!empty($abilities[0])): ?>
+
+					<div class="poke-card">
+
+						<h2>Abilities</h2>
+
+						<?php pokespells($abilities); ?>
+
+					</div>
+
+				<?php endif; ?>
+                
+            </div>
+            
+            <div class="poke-summary">
+
+				<?php if(!empty($abilities_hidden[0])): ?>
+
+					<div class="poke-card poke-spells-hidden">
+
+						<h2>Hidden Abilities</h2>
+
+						<?php pokespells($abilities_hidden, true); ?>
+
+					</div>
+
+				<?php endif; ?>
+                
+            </div>
+            
+            <div class="clear"></div>
+            
+                <?php echo do_shortcode('[primetime-related name="'.$current_name.'"]'); ?>
+
+		</div>
+
+	</article>
+            
+    <div class="clear"></div>
+    
+    <nav class="pokenav">
+
+		<div class="pokenav-link pokenev-left">
+
+			<a class="poke-nav-left" href="<?php echo site_url() . '/pokedex/' . $prev_class; ?>" title="<?php echo $prev; ?>">
+
+				<i class="fal fa-long-arrow-left arrow-button"></i>
+
+				<span class="poke-nav-thumb" style="background-image: url('<?php echo $prev_image; ?>');"></span>
+
+			</a>
+
+		</div>
+
+		<div class="pokenav-link pokenav-right">
+
+			<a class="poke-nav-right" href="<?php echo site_url() . '/pokedex/' . $next_class; ?>">
+
+				<i class="fal fa-long-arrow-right arrow-button"></i>
+
+				<span class="poke-nav-thumb" style="background-image: url('<?php echo $next_image; ?>');"></span>
+
+			</a>
+
+		</div>
+        
+    </nav>
+
+</section>
+
+
+
+<?php
+
+
+
+
+
+//do_action( 'storefront_sidebar' );
+
+get_footer();
