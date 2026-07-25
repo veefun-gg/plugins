@@ -54,12 +54,132 @@ global $plugin_weburl;
 
     <script type="text/javascript">
     var ptpNonce = '<?php echo wp_create_nonce('ptp_admin_scripts'); ?>';
+
+    function ptpPricingFallback(thatId) {
+
+        jQuery("#result_"+thatId).html('<p class="ptp-pricing-unavailable">Pricing unavailable right now.</p>');
+
+    }
+
+    function ptpPricingResponseIsValid(data) {
+
+        if(typeof data !== 'string' || data.replace(/^\s+|\s+$/g, '') == '') {
+
+            return false;
+
+        }
+
+        var response = jQuery("<div></div>").html(data);
+        var allowedRootElements = "div.quarter, div.margin5, small, div.margin10";
+        var hasUnexpectedContent = response.contents().filter(function() {
+
+            if(this.nodeType === 3) {
+
+                return String(this.nodeValue).replace(/^\s+|\s+$/g, '') != '';
+
+            }
+
+            return this.nodeType !== 1 || !jQuery(this).is(allowedRootElements);
+
+        }).length > 0;
+
+        if(hasUnexpectedContent || response.find("script, style, iframe, object, embed, link, meta").length > 0) {
+
+            return false;
+
+        }
+
+        var priceBlocks = response.children("div.quarter");
+
+        if(priceBlocks.length == 0) {
+
+            return false;
+
+        }
+
+        return priceBlocks.filter(function() {
+
+            return jQuery(this).children("h3").length == 1 && jQuery(this).text().indexOf("$") != -1;
+
+        }).length === priceBlocks.length;
+
+    }
+
+    function ptpPricingFallbackGroup(theseIds) {
+
+        if(theseIds != '') {
+
+            var ids = String(theseIds).split(",");
+
+            for(var i = 0; i < ids.length; i++) {
+
+                var thatId = String(ids[i]).replace(/^\s+|\s+$/g, '');
+
+                if(thatId != '') {
+
+                    jQuery("#result_"+thatId).text("Pricing unavailable right now.");
+
+                }
+
+            }
+
+        }
+
+    }
+
+    function ptpPricingBusyGroup(theseIds,isBusy) {
+
+        if(theseIds != '') {
+
+            var ids = String(theseIds).split(",");
+
+            for(var i = 0; i < ids.length; i++) {
+
+                var thatId = String(ids[i]).replace(/^\s+|\s+$/g, '');
+
+                if(thatId != '') {
+
+                    jQuery("#result_"+thatId).attr("aria-busy", isBusy ? "true" : "false");
+
+                }
+
+            }
+
+        }
+
+    }
+
+    function ptpPricingGroupValueIsValid(value) {
+
+        return typeof value === "string" && /^\$\d+(?:\.\d{1,2})?$/.test(value);
+
+    }
     
     function updateCardsPricing(thatId,type) {
 
-        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-card.php", data: "id="+thatId+"&ptype="+type+"&ptp_nonce="+ptpNonce, success: function(data) {
+        jQuery("#result_"+thatId).attr("aria-busy", "true");
 
-            jQuery("#result_"+thatId).html(data);
+        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-card.php", data: "id="+thatId+"&ptype="+type+"&ptp_nonce="+ptpNonce, timeout: 10000, success: function(data) {
+
+            if(ptpPricingResponseIsValid(data)) {
+
+                jQuery("#result_"+thatId).html(data);
+
+            } else {
+
+                ptpPricingFallback(thatId);
+
+            }
+
+        }
+        , error: function() {
+
+            ptpPricingFallback(thatId);
+
+        }
+        , complete: function() {
+
+            jQuery("#result_"+thatId).attr("aria-busy", "false");
 
         }
         });
@@ -68,21 +188,67 @@ global $plugin_weburl;
         
     function updateCardsPricingGroup(theseIds,type) {
 
-        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-cards.php", data: "ids="+theseIds+"&ptype="+type+"&ptp_nonce="+ptpNonce, success: function(data) {
+        ptpPricingBusyGroup(theseIds,true);
+
+        jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>admin/scripts/get-cards.php", data: "ids="+theseIds+"&ptype="+type+"&ptp_nonce="+ptpNonce, timeout: 10000, success: function(data) {
 
             //jQuery("#result_"+thatId).html(data);
-            if(data != '') {
+            if(typeof data === 'string' && data.replace(/^\s+|\s+$/g, '') != '') {
            
-                var obj = jQuery.parseJSON(data);
+                try {
+                    var obj = jQuery.parseJSON(data);
 
-                for (const key in obj) {
-                    if (obj.hasOwnProperty(key)) {
-                        //console.log(key+'/'+obj[key]);
-                        jQuery("#result_"+key).html(obj[key]);
+                    if(Object.prototype.toString.call(obj) !== "[object Object]") {
+
+                        ptpPricingFallbackGroup(theseIds);
+
+                        return;
+
                     }
+
+                    var ids = String(theseIds).split(",");
+
+                    for(var i = 0; i < ids.length; i++) {
+
+                        var thatId = String(ids[i]).replace(/^\s+|\s+$/g, '');
+
+                        if(thatId != '') {
+
+                            if(Object.prototype.hasOwnProperty.call(obj,thatId) && ptpPricingGroupValueIsValid(obj[thatId])) {
+
+                                jQuery("#result_"+thatId).text(obj[thatId]);
+
+                            } else {
+
+                                jQuery("#result_"+thatId).text("Pricing unavailable right now.");
+
+                            }
+
+                        }
+
+                    }
+
+                } catch(e) {
+
+                    ptpPricingFallbackGroup(theseIds);
+
                 }
                 
+            } else {
+
+                ptpPricingFallbackGroup(theseIds);
+
             }
+
+        }
+        , error: function() {
+
+            ptpPricingFallbackGroup(theseIds);
+
+        }
+        , complete: function() {
+
+            ptpPricingBusyGroup(theseIds,false);
 
         }
         });
