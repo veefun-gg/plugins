@@ -2,6 +2,121 @@
 /* PRICE GUIDE DISPLAY
 -----------------------------------------------------------------*/
 
+function priceguide_quick_card_links_display() {
+global $wpdb;
+
+    $cards = $wpdb->get_results($wpdb->prepare(
+        "SELECT name, card_set_name, cached_meta, permalink, api_id FROM ".$wpdb->prefix."ptp_cache_card WHERE name != '' AND permalink != '' AND api_id != '' ORDER BY CASE WHEN permalink = %s AND api_id = %s THEN 0 ELSE 1 END, release_date DESC, name ASC, api_id ASC LIMIT %d",
+        'machop',
+        'base1-52',
+        12
+    ));
+
+    if(empty($cards)) {
+        return;
+    }
+
+    $items = '';
+
+    foreach($cards as $card) {
+        $permalink = preg_replace('/[^A-Za-z0-9\-_]/', '', (string) $card->permalink);
+        $api_id = preg_replace('/[^A-Za-z0-9\-_]/', '', (string) $card->api_id);
+
+        if($permalink == '' || $api_id == '') {
+            continue;
+        }
+
+        $meta = maybe_unserialize($card->cached_meta);
+        $card_number = '';
+
+        if(is_array($meta) && !empty($meta['number'])) {
+            $card_number = $meta['number'];
+
+            if(!empty($meta['set']['printedTotal'])) {
+                $card_number .= '/'.$meta['set']['printedTotal'];
+            }
+        }
+
+        $meta_parts = array();
+
+        if(!empty($card->card_set_name)) {
+            $meta_parts[] = $card->card_set_name;
+        }
+
+        if($card_number != '') {
+            $meta_parts[] = '#'.$card_number;
+        }
+
+        $items .= '<li class="pg-quick-links__item">';
+            $items .= '<a class="pg-quick-links__link" href="'.esc_url(home_url('/price-guide/'.$permalink.'/'.$api_id.'/')).'">';
+                $items .= '<span class="pg-quick-links__title">'.esc_html($card->name).'</span>';
+
+                if(!empty($meta_parts)) {
+                    $items .= '<span class="pg-quick-links__meta">'.esc_html(implode(' ', $meta_parts)).'</span>';
+                }
+
+                $items .= '<span class="pg-quick-links__action">View details</span>';
+            $items .= '</a>';
+        $items .= '</li>';
+    }
+
+    if($items == '') {
+        return;
+    }
+    ?>
+
+    <section class="pg-quick-links" aria-labelledby="pg-quick-links-title">
+        <h2 id="pg-quick-links-title">Quick Card Links</h2>
+        <ul class="pg-quick-links__list">
+            <?php echo $items; ?>
+        </ul>
+    </section>
+
+    <?php
+}
+
+function priceguide_session_value($key,$default = '') {
+
+    if(isset($_SESSION) && is_array($_SESSION) && array_key_exists($key, $_SESSION)) {
+        return $_SESSION[$key];
+    }
+
+    return $default;
+
+}
+
+function priceguide_quick_card_links_index_content($content) {
+
+    if(is_admin()) {
+        return $content;
+    }
+
+    if(!is_page('price-guide') && get_query_var('pagename') != 'price-guide') {
+        return $content;
+    }
+
+    if(get_query_var('pgpokename') != '' || get_query_var('pgpokeid') != '') {
+        return $content;
+    }
+
+    if(strpos($content, 'pg-quick-links') !== false || has_shortcode($content, 'priceguide-list')) {
+        return $content;
+    }
+
+    ob_start();
+    priceguide_quick_card_links_display();
+    $quick_links = ob_get_contents();
+    ob_end_clean();
+
+    if(trim($quick_links) == '') {
+        return $content;
+    }
+
+    return $quick_links.$content;
+
+}
+add_filter('the_content', 'priceguide_quick_card_links_index_content', 9);
+
 function priceguide_list_code_display($category,$pname,$set) {
 global $plugin_weburl,$wpdb;
     
@@ -9,6 +124,11 @@ global $plugin_weburl,$wpdb;
     if(get_query_var( 'pglistpage' ) > 0) {
         $offset = get_query_var( 'pglistpage' );
     }
+
+    $session_perpage = priceguide_session_value('perpage');
+    $session_order = priceguide_session_value('order','alpha');
+    $session_gridlist = priceguide_session_value('gridlist');
+    $session_set = priceguide_session_value('set');
     ?>
 
     <style>
@@ -19,6 +139,8 @@ global $plugin_weburl,$wpdb;
         }
     </style>
 
+    <?php if($pname == '' && $set == '') { priceguide_quick_card_links_display(); } ?>
+
     <div class="pg-list grid">
         
         <div class="loading">
@@ -28,6 +150,32 @@ global $plugin_weburl,$wpdb;
         <script type="text/javascript">
         jQuery(document).ready(function() {
             var filterSelectors = "#options_perpage, #options_gridlist, #options_set, #options_order";
+
+            function priceguideListFallback() {
+                jQuery("#pgresults").html('<p class="pg-list-unavailable">Price Guide results are unavailable right now.</p>');
+            }
+
+            function priceguideListResponseIsValid(data) {
+                if(typeof data !== "string" || data.trim() == "") {
+                    return false;
+                }
+
+                var response = jQuery("<div></div>").html(data);
+                var allowedRootElements = ".types, .clear, .full.results, .fifth.card, .full.card, .pagination";
+                var hasUnexpectedContent = response.contents().filter(function() {
+                    if(this.nodeType === 3) {
+                        return String(this.nodeValue).trim() != "";
+                    }
+
+                    return this.nodeType !== 1 || !jQuery(this).is(allowedRootElements);
+                }).length > 0;
+
+                if(hasUnexpectedContent || response.find("script, style, iframe, object, embed, link, meta").length > 0) {
+                    return false;
+                }
+
+                return response.children(".full.results").length === 1;
+            }
 
             function getCards(offset) {
                 jQuery("#pgresults").attr("aria-busy", "true");
@@ -52,10 +200,19 @@ global $plugin_weburl,$wpdb;
                 jQuery.ajax({type: "POST", url: "<?php echo $plugin_weburl; ?>templates/get-list.php", data: "name=<?php echo $pname; ?>&offset="+offset+"&perpage="+perpage+"&gridlist="+gridlist+"&order="+order+"&set="+encodeURIComponent(set)+"&type="+encodeURIComponent(type), success: function(data)
                 {
 
-                    jQuery("#pgresults").html(data);
-                    jQuery('.loading').fadeOut();
-                    jQuery("#pgresults").attr("aria-busy", "false");
+                    if(priceguideListResponseIsValid(data)) {
+                        jQuery("#pgresults").html(data);
+                    } else {
+                        priceguideListFallback();
+                    }
 
+                }
+                , error: function() {
+                    priceguideListFallback();
+                }
+                , complete: function() {
+                    jQuery('.loading').stop(true, true).fadeOut();
+                    jQuery("#pgresults").attr("aria-busy", "false");
                 }
                 });
 
@@ -119,20 +276,20 @@ global $plugin_weburl,$wpdb;
         </script>
         
         <select class="pgoptions" id="options_perpage">
-            <option value="25"<?php if(!$_SESSION['perpage'] || $_SESSION['perpage'] == 25) {  ?> selected="selected"<?php } ?>>25 Per Page</option>
-            <option value="50"<?php if($_SESSION['perpage'] == 50) {  ?> selected="selected"<?php } ?>>50 Per Page</option>
-            <option value="100"<?php if($_SESSION['perpage'] == 100) {  ?> selected="selected"<?php } ?>>100 Per Page</option>
+            <option value="25"<?php if(!$session_perpage || $session_perpage == 25) {  ?> selected="selected"<?php } ?>>25 Per Page</option>
+            <option value="50"<?php if($session_perpage == 50) {  ?> selected="selected"<?php } ?>>50 Per Page</option>
+            <option value="100"<?php if($session_perpage == 100) {  ?> selected="selected"<?php } ?>>100 Per Page</option>
         </select>
         
         <select class="pgoptions" id="options_order">
-            <option value="price"<?php if($_SESSION['order'] == 'price') {  ?> selected="selected"<?php } ?>>Order By Price High to Low</option>
-            <option value="alpha"<?php if($_SESSION['order'] == 'alpha') {  ?> selected="selected"<?php } ?>>Order Aphaphetically</option>
-            <option value="number"<?php if($_SESSION['order'] == 'number') {  ?> selected="selected"<?php } ?>>Order By Card Number</option>
+            <option value="price"<?php if($session_order == 'price') {  ?> selected="selected"<?php } ?>>Order By Price High to Low</option>
+            <option value="alpha"<?php if($session_order == 'alpha') {  ?> selected="selected"<?php } ?>>Order Alphabetically</option>
+            <option value="number"<?php if($session_order == 'number') {  ?> selected="selected"<?php } ?>>Order By Card Number</option>
         </select>
         
         <select class="pgoptions" id="options_gridlist">
-            <option value="grid"<?php if($_SESSION['gridlist'] == 'grid') {  ?> selected="selected"<?php } ?>>Grid View</option>
-            <option value="list"<?php if(!$_SESSION['gridlist'] || $_SESSION['gridlist'] == 'list') {  ?> selected="selected"<?php } ?>>List View</option>
+            <option value="grid"<?php if($session_gridlist == 'grid') {  ?> selected="selected"<?php } ?>>Grid View</option>
+            <option value="list"<?php if(!$session_gridlist || $session_gridlist == 'list') {  ?> selected="selected"<?php } ?>>List View</option>
         </select>
 
         <?php if($pname == '' && $set == '') { ?>
@@ -144,7 +301,7 @@ global $plugin_weburl,$wpdb;
             $c = 0;
             foreach($sets as $s) {
             ?>
-            <option value="<?php echo $s->card_set_name; ?>"<?php if(!$_SESSION['set'] && $c == 0 || $_SESSION['set'] == $s->card_set_name) {  ?> selected="selected"<?php } ?>>Set: <?php echo $s->card_set_name; ?></option>
+            <option value="<?php echo $s->card_set_name; ?>"<?php if((!$session_set && $c == 0) || $session_set == $s->card_set_name) {  ?> selected="selected"<?php } ?>>Set: <?php echo $s->card_set_name; ?></option>
             <?php
             $c++;
             }
@@ -160,7 +317,7 @@ global $plugin_weburl,$wpdb;
             <?php
             $x = 1;
             while($x <= 20) {
-                if($_SESSION['gridlist'] == 'grid') {
+                if($session_gridlist == 'grid') {
             ?>
                 
                 <div class="fifth card">
