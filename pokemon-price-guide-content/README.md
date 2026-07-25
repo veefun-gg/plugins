@@ -16,7 +16,7 @@ The Pokémon TCG Card Content System is a WordPress plugin that adds rich text c
 
 ## Installation
 
-1. Upload the `primetime-tcg-card-content` folder to the `/wp-content/plugins/` directory
+1. Upload the `pokemon-price-guide-content` folder to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Navigate to 'Card Content' in the admin menu to start managing card content
 
@@ -26,6 +26,15 @@ The Pokémon TCG Card Content System is a WordPress plugin that adds rich text c
 - PHP 7.4 or higher
 - MySQL 5.6 or higher
 - Primetime Price Guide plugin installed and activated
+
+## Repository Files
+
+- `primetime-tcg-card-content.php` is the runtime WordPress plugin file.
+- `css/admin.css` and `js/admin.js` are runtime assets loaded only on the plugin's Card Content Manager administration page.
+- `card_content_template_example.html` is a documentation-only example for manual content authoring. Runtime code and the administration interface do not load it.
+- `README.md` is project documentation.
+
+There is currently no external content-generation script or build process for this plugin. No standalone tools directory is required.
 
 ## Usage
 
