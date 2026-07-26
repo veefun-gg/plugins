@@ -379,13 +379,117 @@ add_shortcode( 'priceguide-list', 'priceguide_list_code' );
 -----------------------------------------------------------------*/
 
 function related_code_card_alt($card) {
-    $alt = trim($card->name . ' trading card');
+    $card_name = is_object($card) && isset($card->name) && is_scalar($card->name) ? trim((string) $card->name) : '';
+    $card_set_name = is_object($card) && isset($card->card_set_name) && is_scalar($card->card_set_name) ? trim((string) $card->card_set_name) : '';
+    $alt = trim(($card_name != '' ? $card_name : 'Pokemon') . ' trading card');
 
-    if (!empty($card->card_set_name)) {
-        $alt .= ' from ' . $card->card_set_name;
+    if ($card_set_name != '') {
+        $alt .= ' from ' . $card_set_name;
     }
 
     return $alt;
+}
+
+function related_code_scalar_property($card,$property) {
+
+    if(!is_object($card) || !isset($card->{$property}) || !is_scalar($card->{$property})) {
+        return '';
+    }
+
+    return trim((string) $card->{$property});
+
+}
+
+function related_code_card_number($card) {
+    $cached_meta = related_code_scalar_property($card, 'cached_meta');
+
+    if($cached_meta != '') {
+        $meta = maybe_unserialize($cached_meta);
+
+        if(is_array($meta) && isset($meta['number']) && is_scalar($meta['number'])) {
+            $meta_number = trim((string) $meta['number']);
+
+            if($meta_number != '') {
+                return $meta_number;
+            }
+        }
+    }
+
+    return related_code_scalar_property($card, 'card_number');
+}
+
+function related_code_image_url($card) {
+    $image_url = related_code_scalar_property($card, 'image_large');
+
+    if($image_url == '' || filter_var($image_url, FILTER_VALIDATE_URL) === false) {
+        return '';
+    }
+
+    $scheme = strtolower((string) wp_parse_url($image_url, PHP_URL_SCHEME));
+
+    if($scheme !== 'http' && $scheme !== 'https') {
+        return '';
+    }
+
+    return esc_url_raw($image_url);
+}
+
+function related_code_release_date($value) {
+    $empty_date = array(
+        'datetime' => '',
+        'label' => ''
+    );
+
+    if(!is_scalar($value)) {
+        return $empty_date;
+    }
+
+    $value = trim((string) $value);
+
+    if($value == '') {
+        return $empty_date;
+    }
+
+    $formats = array('Y-m-d H:i:s', 'Y-m-d', 'Y/m/d');
+
+    foreach($formats as $format) {
+        $date = DateTimeImmutable::createFromFormat('!'.$format, $value);
+        $errors = DateTimeImmutable::getLastErrors();
+        $is_valid = $date !== false && (
+            $errors === false ||
+            ($errors['warning_count'] === 0 && $errors['error_count'] === 0)
+        );
+
+        if($is_valid && $date->format($format) === $value) {
+            return array(
+                'datetime' => $date->format('Y-m-d'),
+                'label' => $date->format('F j, Y')
+            );
+        }
+    }
+
+    return $empty_date;
+}
+
+function related_code_normalize_card($card,$current_permalink,$current_api_id) {
+    $permalink = related_code_scalar_property($card, 'permalink');
+    $api_id = related_code_scalar_property($card, 'api_id');
+    $card_name = related_code_scalar_property($card, 'name');
+    $card_set_name = related_code_scalar_property($card, 'card_set_name');
+    $image_url = related_code_image_url($card);
+    $release_date = related_code_release_date(related_code_scalar_property($card, 'release_date'));
+
+    return array(
+        'url' => get_bloginfo('wpurl').'/price-guide/'.$permalink.'/'.$api_id.'/',
+        'name' => $card_name != '' ? $card_name : 'Card',
+        'set_name' => $card_set_name,
+        'number' => related_code_card_number($card),
+        'image_url' => $image_url,
+        'image_alt' => related_code_card_alt($card),
+        'release_datetime' => $release_date['datetime'],
+        'release_label' => $release_date['label'],
+        'is_current' => $permalink === $current_permalink && $api_id === $current_api_id
+    );
 }
 
 function related_code_display($type,$name,$set) {
@@ -403,50 +507,78 @@ global $wpdb;
         return;
     }
 
+    $current_permalink = (string) get_query_var('pgpokename');
+    $current_api_id = (string) get_query_var('pgpokeid');
+    $related_cards = array();
+
+    foreach($cards as $card) {
+        $related_cards[] = related_code_normalize_card($card, $current_permalink, $current_api_id);
+    }
+
     $component_id = function_exists('wp_unique_id') ? wp_unique_id('related-cards-') : 'related-cards-'.uniqid();
     $viewport_id = $component_id . '-viewport';
     $heading_id = $component_id . '-heading';
     
-    $content = '<section class="related-cards" data-related-cards aria-labelledby="'.esc_attr($heading_id).'">';
+    $content = '<section class="related-cards" data-related-cards data-related-cards-view="slider" aria-labelledby="'.esc_attr($heading_id).'">';
         $content .= '<div class="related-cards__header">';
             $content .= '<h2 class="related-cards__heading" id="'.esc_attr($heading_id).'">Cards Like '.esc_html($name).'</h2>';
-            $content .= '<div class="related-cards__controls" data-related-cards-controls role="group" aria-label="Related card navigation" hidden>';
-                $content .= '<button class="related-cards__control related-cards__control--page-prev" type="button" data-related-cards-page-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Jump backward several cards" disabled hidden>';
-                    $content .= '<span aria-hidden="true">&laquo;</span>';
-                $content .= '</button>';
-                $content .= '<button class="related-cards__control related-cards__control--prev" type="button" data-related-cards-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Previous card" disabled>';
-                    $content .= '<span aria-hidden="true">&larr;</span>';
-                $content .= '</button>';
-                $content .= '<button class="related-cards__control related-cards__control--next" type="button" data-related-cards-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Next card" disabled>';
-                    $content .= '<span aria-hidden="true">&rarr;</span>';
-                $content .= '</button>';
-                $content .= '<button class="related-cards__control related-cards__control--page-next" type="button" data-related-cards-page-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Jump forward several cards" disabled hidden>';
-                    $content .= '<span aria-hidden="true">&raquo;</span>';
-                $content .= '</button>';
+            $content .= '<div class="related-cards__toolbar">';
+                $content .= '<div class="related-cards__view-switcher" data-related-cards-view-switcher role="group" aria-label="Related cards view" hidden>';
+                    $content .= '<button class="related-cards__view-button" type="button" data-related-cards-view-button="slider" aria-pressed="true">Slider</button>';
+                    $content .= '<button class="related-cards__view-button" type="button" data-related-cards-view-button="grid" aria-pressed="false">Grid</button>';
+                    $content .= '<button class="related-cards__view-button" type="button" data-related-cards-view-button="table" aria-pressed="false">Table</button>';
+                $content .= '</div>';
+                $content .= '<div class="related-cards__controls" data-related-cards-controls role="group" aria-label="Related card navigation" hidden>';
+                    $content .= '<button class="related-cards__control related-cards__control--prev" type="button" data-related-cards-prev aria-controls="'.esc_attr($viewport_id).'" aria-label="Previous related card" disabled hidden>';
+                        $content .= '<span aria-hidden="true">&larr;</span><span>Previous</span>';
+                    $content .= '</button>';
+                    $content .= '<button class="related-cards__control related-cards__control--next" type="button" data-related-cards-next aria-controls="'.esc_attr($viewport_id).'" aria-label="Next related card" disabled hidden>';
+                        $content .= '<span>Next</span><span aria-hidden="true">&rarr;</span>';
+                    $content .= '</button>';
+                $content .= '</div>';
             $content .= '</div>';
         $content .= '</div>';
 
         $content .= '<div class="related-cards__viewport" id="'.esc_attr($viewport_id).'" data-related-cards-viewport tabindex="0">';
-            $content .= '<ul class="related-cards__list">';
-                foreach($cards as $c) {
-                    $card_url = get_bloginfo('wpurl').'/price-guide/'.$c->permalink.'/'.$c->api_id.'/';
-                    $card_set_name = !empty($c->card_set_name) ? $c->card_set_name : '';
+            $content .= '<table class="related-cards__table">';
+                $content .= '<caption class="screen-reader-text">Cards related to '.esc_html($name).'</caption>';
+                $content .= '<thead>';
+                    $content .= '<tr>';
+                        $content .= '<th scope="col">Card</th>';
+                        $content .= '<th scope="col">Set</th>';
+                        $content .= '<th scope="col">Card number</th>';
+                        $content .= '<th scope="col">Release date</th>';
+                    $content .= '</tr>';
+                $content .= '</thead>';
+                $content .= '<tbody class="related-cards__list">';
+                foreach($related_cards as $card) {
+                    $item_class = 'related-cards__item'.($card['is_current'] ? ' is-current' : '');
 
-                    $content .= '<li class="related-cards__item">';
-                        $content .= '<a class="related-cards__link" href="'.esc_url($card_url).'">';
+                    $content .= '<tr class="'.esc_attr($item_class).'" data-related-cards-item>';
+                        $content .= '<td class="related-cards__card">';
                             $content .= '<span class="related-cards__media">';
-                                $content .= '<img src="'.esc_url($c->image_large).'" alt="'.esc_attr(related_code_card_alt($c)).'" loading="lazy" decoding="async" />';
-                            $content .= '</span>';
-                            $content .= '<span class="related-cards__content">';
-                                $content .= '<span class="related-cards__title">'.esc_html($c->name).'</span>';
-                                if ($card_set_name !== '') {
-                                    $content .= '<span class="related-cards__meta">'.esc_html($card_set_name).'</span>';
+                                $content .= '<span class="related-cards__image-fallback" aria-hidden="true">Image unavailable</span>';
+                                if($card['image_url'] != '') {
+                                    $content .= '<img src="'.esc_url($card['image_url']).'" alt="'.esc_attr($card['image_alt']).'" loading="lazy" decoding="async" />';
                                 }
                             $content .= '</span>';
-                        $content .= '</a>';
-                    $content .= '</li>';
+                            $content .= '<a class="related-cards__link" href="'.esc_url($card['url']).'"'.($card['is_current'] ? ' aria-current="page"' : '').'>';
+                                $content .= '<span class="related-cards__title">'.esc_html($card['name']).'</span>';
+                            $content .= '</a>';
+                        $content .= '</td>';
+                        $content .= '<td class="related-cards__set" data-label="Set">'.($card['set_name'] != '' ? esc_html($card['set_name']) : '<span class="related-cards__empty">Set unavailable</span>').'</td>';
+                        $content .= '<td class="related-cards__number" data-label="Card number">'.($card['number'] != '' ? esc_html($card['number']) : '<span class="related-cards__empty">&mdash;</span>').'</td>';
+                        $content .= '<td class="related-cards__date" data-label="Release date">';
+                            if($card['release_datetime'] != '' && $card['release_label'] != '') {
+                                $content .= '<time datetime="'.esc_attr($card['release_datetime']).'">'.esc_html($card['release_label']).'</time>';
+                            } else {
+                                $content .= '<span class="related-cards__empty">&mdash;</span>';
+                            }
+                        $content .= '</td>';
+                    $content .= '</tr>';
                 }
-            $content .= '</ul>';
+                $content .= '</tbody>';
+            $content .= '</table>';
         $content .= '</div>';
     $content .= '</section>';
     

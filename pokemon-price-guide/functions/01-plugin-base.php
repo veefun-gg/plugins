@@ -27,7 +27,7 @@ function getCustomCSS2() {
 	define('CSSPATH2', dirname(dirname(__FILE__)).'/');
 	foreach (glob(CSSPATH2."css/*.css") as $filename)
 	{
-        wp_register_style( str_replace(".","_",strtolower(basename($filename))), $plugin_weburl.'css/'.basename($filename), array(), '3.5.4' );
+        wp_register_style( str_replace(".","_",strtolower(basename($filename))), $plugin_weburl.'css/'.basename($filename), array(), '3.5.5' );
         wp_enqueue_style( str_replace(".","_",strtolower(basename($filename))) );
 	}
 
@@ -35,7 +35,7 @@ function getCustomCSS2() {
         'ptp_related_cards_rail',
         $plugin_weburl.'js/related-cards-rail.js',
         array(),
-        '1.0.0',
+        '1.1.0',
         true
     );
     wp_enqueue_script( 'ptp_related_cards_rail' );
