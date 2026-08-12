@@ -6,6 +6,9 @@
     Version: 1.1.0
 */
 
+define( 'PRIMETIME_POKEDEX_REWRITE_VERSION', '2026-08-12-1' );
+define( 'PRIMETIME_POKEDEX_REWRITE_VERSION_OPTION', 'primetime_pokedex_rewrite_version' );
+
 class PrimetimePokedex {
     function __construct() {
         add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
@@ -23,6 +26,7 @@ add_action( 'plugins_loaded', array( $var, 'hooks' ) );
 
 add_action('init', 'add_pokedex_post_tax');
 add_action( 'init', 'pokedex_register_profile_route', 20 );
+add_action( 'init', 'pokedex_maybe_flush_rewrite_rules', 99 );
 add_action('wp_enqueue_scripts', 'pokedex_custom_js', 999);
 add_action('wp_enqueue_scripts', 'pokedex_awesome_icons');
 add_action('wp_enqueue_scripts', 'pokedex_custom', 100);
@@ -95,7 +99,20 @@ function pokedex_register_profile_route() {
 function pokedex_activate() {
     add_pokedex_post_tax();
     pokedex_register_profile_route();
+    pokedex_flush_rewrite_rules();
+}
+
+function pokedex_flush_rewrite_rules() {
     flush_rewrite_rules( false );
+    update_option( PRIMETIME_POKEDEX_REWRITE_VERSION_OPTION, PRIMETIME_POKEDEX_REWRITE_VERSION, false );
+}
+
+function pokedex_maybe_flush_rewrite_rules() {
+    if ( PRIMETIME_POKEDEX_REWRITE_VERSION === get_option( PRIMETIME_POKEDEX_REWRITE_VERSION_OPTION ) ) {
+        return;
+    }
+
+    pokedex_flush_rewrite_rules();
 }
 
 function pokedex_deactivate() {
@@ -533,7 +550,7 @@ function poke_chain($array, $build = array(), $depth = 0) {
 
 // ADD_POKEMON
 // Add a page/pokemon to pokedex
-function add_pokemon($id, $tax = 'pokedex', $pokeCount ) {
+function add_pokemon($id, $tax, $pokeCount ) {
     $length = strlen((string) abs($pokeCount));
     $dreamWorld = true;
     // Pokémon Details
