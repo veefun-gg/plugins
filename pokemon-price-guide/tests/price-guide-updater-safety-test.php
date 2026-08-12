@@ -418,6 +418,19 @@ primetime_price_guide_register_updater_callback();
 $registered_callbacks = $mock_actions['primetime_update_cards_cron'][10];
 assert_same( 1, count( $registered_callbacks ), 'repeated registration remains idempotent' );
 
+$admin_script = file_get_contents( dirname( __DIR__ ) . '/admin/scripts/update-cards.php' );
+assert_true( is_string( $admin_script ), 'admin updater source is readable' );
+assert_same( 1, substr_count( $admin_script, 'primetime_price_guide_run_admin_updater();' ), 'admin updater uses shared bounded runner once' );
+assert_same( 0, substr_count( $admin_script, 'getPokeCardsAll(' ), 'admin updater has no direct API call' );
+assert_same( 0, substr_count( $admin_script, 'populateCacheCard(' ), 'admin updater has no direct persistence call' );
+assert_same( 1, substr_count( $admin_script, "echo 'EOL';" ), 'admin updater stops the legacy browser loop' );
+$guard_position  = strpos( $admin_script, "require_once '_guard.php';" );
+$runner_position = strpos( $admin_script, 'primetime_price_guide_run_admin_updater();' );
+assert_true(
+    false !== $guard_position && false !== $runner_position && $guard_position < $runner_position,
+    'admin updater retains authorization guard before bounded runner'
+);
+
 $wpdb              = new PriceGuideMockWpdb();
 $fixture           = card_fixture( array() );
 $wpdb->card_rows   = array( existing_card_row( $fixture ) );
@@ -430,10 +443,41 @@ if ( $enabled_cron_mode ) {
     assert_same( 1, $cron_result['api_requests'], 'enabled cron makes one mocked API request' );
     assert_same( 1, $cron_result['cards_processed'], 'enabled cron processes one bounded mocked card' );
     assert_same( 1, $mock_api_calls, 'enabled cron does not request a second page' );
+
+    $wpdb              = new PriceGuideMockWpdb();
+    $wpdb->card_rows   = array( existing_card_row( $fixture ) );
+    $mock_api_response = array( $fixture );
+    $mock_api_calls    = 0;
+    reset_mock_media();
+
+    $admin_result = primetime_price_guide_run_admin_updater();
+    assert_same( 'limit_reached', $admin_result['status'], 'enabled admin updater stops at explicit page limit' );
+    assert_same( 1, $admin_result['api_requests'], 'enabled admin updater makes one mocked API request' );
+    assert_same( 1, $admin_result['cards_processed'], 'enabled admin updater processes one bounded mocked card' );
+    assert_same( 1, $mock_api_calls, 'enabled admin updater does not request a second page' );
+    assert_same( 1, count( $wpdb->updates ), 'enabled admin updater performs one mocked card update' );
+    assert_same( 0, $mock_media['download_calls'], 'enabled admin updater skips unchanged mocked media' );
 } else {
     assert_same( 'disabled', $cron_result['status'], 'cron is inert by default' );
     assert_same( 0, $mock_api_calls, 'disabled cron makes no API request' );
     assert_same( 0, count( $wpdb->queries ), 'disabled cron makes no database query' );
+    assert_same( 0, count( $wpdb->inserts ), 'disabled cron makes no database insert' );
+    assert_same( 0, count( $wpdb->updates ), 'disabled cron makes no database update' );
+    assert_same( 0, $mock_media['download_calls'], 'disabled cron makes no media request' );
+
+    $wpdb              = new PriceGuideMockWpdb();
+    $wpdb->card_rows   = array( existing_card_row( $fixture ) );
+    $mock_api_response = array( $fixture );
+    $mock_api_calls    = 0;
+    reset_mock_media();
+
+    $admin_result = primetime_price_guide_run_admin_updater();
+    assert_same( 'disabled', $admin_result['status'], 'admin updater is inert by default' );
+    assert_same( 0, $mock_api_calls, 'disabled admin updater makes no API request' );
+    assert_same( 0, count( $wpdb->queries ), 'disabled admin updater makes no database query' );
+    assert_same( 0, count( $wpdb->inserts ), 'disabled admin updater makes no database insert' );
+    assert_same( 0, count( $wpdb->updates ), 'disabled admin updater makes no database update' );
+    assert_same( 0, $mock_media['download_calls'], 'disabled admin updater makes no media request' );
 }
 
 reset_mock_media();
