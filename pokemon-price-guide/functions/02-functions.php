@@ -42,7 +42,7 @@ function primetime_price_guide_updater_page_size() {
     return $page_size;
 }
 
-function cron_primetime_update_cards_4ccd3826() {
+function primetime_price_guide_run_bounded_updater() {
     global $wpdb;
 
     $summary = array(
@@ -145,6 +145,14 @@ function cron_primetime_update_cards_4ccd3826() {
     }
 
     return $summary;
+}
+
+function cron_primetime_update_cards_4ccd3826() {
+    return primetime_price_guide_run_bounded_updater();
+}
+
+function primetime_price_guide_run_admin_updater() {
+    return primetime_price_guide_run_bounded_updater();
 }
 
 function primetime_price_guide_register_updater_callback() {
