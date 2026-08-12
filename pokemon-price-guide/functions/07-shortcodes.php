@@ -419,19 +419,9 @@ function related_code_card_number($card) {
 }
 
 function related_code_image_url($card) {
-    $image_url = related_code_scalar_property($card, 'image_large');
-
-    if($image_url == '' || filter_var($image_url, FILTER_VALIDATE_URL) === false) {
-        return '';
-    }
-
-    $scheme = strtolower((string) wp_parse_url($image_url, PHP_URL_SCHEME));
-
-    if($scheme !== 'http' && $scheme !== 'https') {
-        return '';
-    }
-
-    return esc_url_raw($image_url);
+    return function_exists( 'ptp_priceguide_local_image_url' )
+        ? ptp_priceguide_local_image_url( $card, 'medium_large' )
+        : '';
 }
 
 function related_code_release_date($value) {
