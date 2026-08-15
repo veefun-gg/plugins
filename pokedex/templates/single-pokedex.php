@@ -19,33 +19,6 @@ function hokepoke($key) {
 }
 
 
-function remoteFileExists($url) {
-    $curl = curl_init($url);
-
-    //don't fetch the actual page, you only want to check the connection is ok
-    curl_setopt($curl, CURLOPT_NOBODY, true);
-
-    //do request
-    $result = curl_exec($curl);
-
-    $ret = false;
-
-    //if request did not fail
-    if ($result !== false) {
-        //if request was ok, check response code
-        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);  
-
-        if ($statusCode == 200) {
-            $ret = true;   
-        }
-    }
-
-    curl_close($curl);
-
-    return $ret;
-}
-
-
 // Pokemon Details
 
 
@@ -58,13 +31,7 @@ $gender = 				hokepoke('pokemon_gender');
 
 $height = 				hokepoke('pokemon_height');
 
-$current_image = 		hokepoke('pokemon_image');
-
-$exists = remoteFileExists($current_image);
-if (!$exists) {
-    $file_name = basename($current_image);
-    $current_image = get_bloginfo('url').'/wp-content/plugins/primetime-pokedex/pokeimg/'.$file_name;
-} 
+$current_image = 		pokedex_get_archive_card_image_url( get_the_ID(), 'full' );
 
 $current_id =			hokepoke('pokemon_id');
 
@@ -76,13 +43,13 @@ $next = 				hokepoke('pokemon_next');
 
 $next_class = 			hokepoke('pokemon_next_class');
 
-$next_image = 			hokepoke('pokemon_next_image');
+$next_image = 			pokedex_get_local_image_url( hokepoke('pokemon_next_image') );
 
 $prev = 				hokepoke('pokemon_prev');
 
 $prev_class = 			hokepoke('pokemon_prev_class');
 
-$prev_image = 			hokepoke('pokemon_prev_image');
+$prev_image = 			pokedex_get_local_image_url( hokepoke('pokemon_prev_image') );
 
 $stat_attack = 			hokepoke('pokemon_stat_attack');
 
@@ -406,7 +373,7 @@ $pokeRand = rand(1,898);
 
 				<i class="fal fa-long-arrow-left arrow-button"></i>
 
-				<span class="poke-nav-thumb" style="background-image: url('<?php echo $prev_image; ?>');"></span>
+				<span class="poke-nav-thumb"<?php if ( ! empty( $prev_image ) ) : ?> style="background-image: url('<?php echo esc_url( $prev_image ); ?>');"<?php endif; ?>></span>
 
 			</a>
 
@@ -424,7 +391,7 @@ $pokeRand = rand(1,898);
 
 				<i class="fal fa-long-arrow-right arrow-button"></i>
 
-				<span class="poke-nav-thumb" style="background-image: url('<?php echo $next_image; ?>');"></span>
+				<span class="poke-nav-thumb"<?php if ( ! empty( $next_image ) ) : ?> style="background-image: url('<?php echo esc_url( $next_image ); ?>');"<?php endif; ?>></span>
 
 			</a>
 
@@ -542,7 +509,11 @@ $pokeRand = rand(1,898);
 
 					</div>
 
-					<img src="<?php echo $current_image; ?>" alt="Pokemon #<?php echo $current_id; ?> <?php echo $current_name; ?>" />
+					<?php if ( ! empty( $current_image ) ) : ?>
+						<img src="<?php echo esc_url( $current_image ); ?>" alt="<?php echo esc_attr( 'Pokemon #' . $current_id . ' ' . $current_name ); ?>" />
+					<?php else : ?>
+						<p class="pokedex-image-unavailable"><?php esc_html_e( 'Profile image unavailable.', 'veefun' ); ?></p>
+					<?php endif; ?>
 
 					<div class="poke-stats">
 
@@ -640,11 +611,10 @@ $pokeRand = rand(1,898);
 
 								$chain_url = $pokemon[0];
 
-								$chain_id = explode(" ", $chain_title);
-
-								//$chain_id= sanitize_title($chain_id);
-
-								print_r($chain_id);
+								$chain_slug = sanitize_title( $chain_title );
+								$chain_id = (int) ltrim( strtok( $chain_title, ' ' ), '#' );
+								$chain_profile = pokedex_get_stored_profile_by_slug( $chain_slug );
+								$chain_image = $chain_profile ? pokedex_get_archive_card_image_url( $chain_profile->ID, 'thumbnail' ) : '';
 
 								if($chain_id == $current_id ) {
 
@@ -654,15 +624,25 @@ $pokeRand = rand(1,898);
 
 								echo "'>";
 
-								echo '<a href="' . site_url() . '/pokedex/' . sanitize_title($chain_title) . '">';
+								if ( $chain_profile ) {
+									echo '<a href="' . esc_url( get_permalink( $chain_profile ) ) . '">';
+								} else {
+									echo '<span>';
+								}
 
-								echo '<div class="poke-chain-link-image"><img src="' . $pokemon[1] . '" /><i class="fas fa-chevron-double-right arrow-chain-icon"></i></div>';
+								echo '<div class="poke-chain-link-image">';
+								if ( ! empty( $chain_image ) ) {
+									echo '<img src="' . esc_url( $chain_image ) . '" alt="' . esc_attr( $chain_title ) . '" />';
+								} else {
+									echo '<span class="pokedex-image-unavailable">' . esc_html__( 'Image unavailable.', 'veefun' ) . '</span>';
+								}
+								echo '<i class="fas fa-chevron-double-right arrow-chain-icon"></i></div>';
 
 								echo "<h5>$chain_title</h5>";
 
 								
 
-								echo "</a>";
+								echo $chain_profile ? '</a>' : '</span>';
 
 								echo "</li>";
 
@@ -748,6 +728,12 @@ $pokeRand = rand(1,898);
             
                 <?php echo do_shortcode('[primetime-related name="'.$current_name.'"]'); ?>
 
+				<?php
+				if ( function_exists( 'ptp_priceguide_get_related_editorial_html' ) ) {
+					echo ptp_priceguide_get_related_editorial_html( $current_name );
+				}
+				?>
+
 		</div>
 
 	</article>
@@ -762,7 +748,7 @@ $pokeRand = rand(1,898);
 
 				<i class="fal fa-long-arrow-left arrow-button"></i>
 
-				<span class="poke-nav-thumb" style="background-image: url('<?php echo $prev_image; ?>');"></span>
+				<span class="poke-nav-thumb"<?php if ( ! empty( $prev_image ) ) : ?> style="background-image: url('<?php echo esc_url( $prev_image ); ?>');"<?php endif; ?>></span>
 
 			</a>
 
@@ -774,7 +760,7 @@ $pokeRand = rand(1,898);
 
 				<i class="fal fa-long-arrow-right arrow-button"></i>
 
-				<span class="poke-nav-thumb" style="background-image: url('<?php echo $next_image; ?>');"></span>
+				<span class="poke-nav-thumb"<?php if ( ! empty( $next_image ) ) : ?> style="background-image: url('<?php echo esc_url( $next_image ); ?>');"<?php endif; ?>></span>
 
 			</a>
 

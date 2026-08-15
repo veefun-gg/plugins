@@ -3,22 +3,30 @@
     Plugin Name: Primetime Pokédex Plugin
     description: Pokédex
     Author: Lucas M. Shepherd <lucas@leoblack.com>
-    Version: 1.0.0
+    Version: 1.1.0
 */
 
-$pokemonCount = get_pokecount();
+define( 'PRIMETIME_POKEDEX_REWRITE_VERSION', '2026-08-12-1' );
+define( 'PRIMETIME_POKEDEX_REWRITE_VERSION_OPTION', 'primetime_pokedex_rewrite_version' );
 
 class PrimetimePokedex {
-    function __construct($count) {
-        add_action('admin_menu', function() use ($count) { page_builder_menu($count); });
+    function __construct() {
+        add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
     }
+
+    public function register_admin_menu() {
+        page_builder_menu( pokedex_get_stored_pokemon_limit() );
+    }
+
     public function hooks() {
     }
 }
-$var = new PrimetimePokedex($pokemonCount);
+$var = new PrimetimePokedex();
 add_action( 'plugins_loaded', array( $var, 'hooks' ) );
 
 add_action('init', 'add_pokedex_post_tax');
+add_action( 'init', 'pokedex_register_profile_route', 20 );
+add_action( 'init', 'pokedex_maybe_flush_rewrite_rules', 99 );
 add_action('wp_enqueue_scripts', 'pokedex_custom_js', 999);
 add_action('wp_enqueue_scripts', 'pokedex_awesome_icons');
 add_action('wp_enqueue_scripts', 'pokedex_custom', 100);
@@ -26,6 +34,7 @@ add_filter( 'single_template', 'set_pokedex_single_template' );
 add_filter( 'archive_template', 'set_pokedex_archive_template' );
 add_filter( 'taxonomy_template', 'set_pokecategory_template' );
 add_action( 'pre_get_posts', 'set_pokedex_archive_order' );
+add_shortcode( 'veefun_pokedex_search', 'pokedex_search_shortcode' );
 
 // ADMIN MENU AND PAGES
 // Add custom taxonomy for Pokémon
@@ -63,14 +72,55 @@ function add_pokedex_post_tax() {
         'labels' => $labels,
         'public' => true,
         'query_var' => true,
-        'rewrite' => array('slug' => 'pokedex'),
-        'has_archive' => true,
+        'rewrite' => array(
+            'slug'       => 'pokedex',
+            'with_front' => false,
+        ),
+        'has_archive' => false,
         'hierarchical' => false,
         'menu_icon' => 'data:image/svg+xml;base64,' . base64_encode('<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><style>.cls-1{fill:#fff;}</style></defs><path class="cls-1" d="M331.24,275.71a77.81,77.81,0,0,1-150.48,0q-65.26-2.67-128.59-10.09c5,108.09,94.38,194.17,203.82,194.17s198.85-86.15,203.84-194.29Q396.59,273,331.24,275.71ZM256,178.3a77.82,77.82,0,0,1,74.37,54.84c43.13-1.82,85.59-5.21,127-10.11a204.13,204.13,0,0,0-402.82.11c41.46,4.89,83.9,8.25,127,10A77.8,77.8,0,0,1,256,178.3Z"/><path class="cls-1" d="M289,256a32.87,32.87,0,0,1-7.63,21.1h0A33,33,0,1,1,289,256Z"/></svg>'),
         'taxonomies' => array(/*'category',*/ 'post_tag')
     );
     register_post_type('pokedex', $args);
 }
+
+/**
+ * Keep the Pokedex landing Page at /pokedex/ while routing one additional
+ * segment to a stored Pokedex post.
+ */
+function pokedex_register_profile_route() {
+    add_rewrite_rule(
+        '^pokedex/([^/]+)/?$',
+        'index.php?post_type=pokedex&name=$matches[1]',
+        'top'
+    );
+}
+
+function pokedex_activate() {
+    add_pokedex_post_tax();
+    pokedex_register_profile_route();
+    pokedex_flush_rewrite_rules();
+}
+
+function pokedex_flush_rewrite_rules() {
+    flush_rewrite_rules( false );
+    update_option( PRIMETIME_POKEDEX_REWRITE_VERSION_OPTION, PRIMETIME_POKEDEX_REWRITE_VERSION, false );
+}
+
+function pokedex_maybe_flush_rewrite_rules() {
+    if ( PRIMETIME_POKEDEX_REWRITE_VERSION === get_option( PRIMETIME_POKEDEX_REWRITE_VERSION_OPTION ) ) {
+        return;
+    }
+
+    pokedex_flush_rewrite_rules();
+}
+
+function pokedex_deactivate() {
+    flush_rewrite_rules( false );
+}
+
+register_activation_hook( __FILE__, 'pokedex_activate' );
+register_deactivation_hook( __FILE__, 'pokedex_deactivate' );
 
 function add_custom_taxonomies() {
   // Add new "Locations" taxonomy to Posts
@@ -165,7 +215,7 @@ function set_pokecategory_template( $taxonomy_template ) {
 }
 
 function pokedex_is_frontend_context() {
-    return is_singular( 'pokedex' ) || is_post_type_archive( 'pokedex' ) || is_tax( 'pokecategory' );
+    return is_page( 'pokedex' ) || is_singular( 'pokedex' ) || is_post_type_archive( 'pokedex' ) || is_tax( 'pokecategory' );
 }
 
 function pokedex_is_archive_context( $query = null ) {
@@ -256,14 +306,148 @@ function pokedex_get_archive_card_title( $post_id ) {
     return get_the_title( $post_id );
 }
 
-function pokedex_get_archive_card_image_url( $post_id ) {
-    $image_url = get_the_post_thumbnail_url( $post_id, 'thumbnail' );
+function pokedex_get_archive_card_image_url( $post_id, $size = 'thumbnail' ) {
+    $image_url = get_the_post_thumbnail_url( $post_id, $size );
 
     if ( ! empty( $image_url ) ) {
-        return $image_url;
+        return pokedex_get_local_image_url( $image_url );
     }
 
-    return get_post_meta( $post_id, 'pokemon_image', true );
+    return pokedex_get_local_image_url( get_post_meta( $post_id, 'pokemon_image', true ) );
+}
+
+function pokedex_get_stored_profile_by_slug( $slug ) {
+    $slug = sanitize_title( (string) $slug );
+
+    if ( '' === $slug ) {
+        return null;
+    }
+
+    $profile = get_page_by_path( $slug, OBJECT, 'pokedex' );
+
+    if ( ! $profile || 'publish' !== $profile->post_status ) {
+        return null;
+    }
+
+    return $profile;
+}
+
+/**
+ * Permit only same-site image URLs on public Pokedex views.
+ */
+function pokedex_get_local_image_url( $image_url ) {
+    if ( ! is_string( $image_url ) || '' === trim( $image_url ) ) {
+        return '';
+    }
+
+    $image_url = esc_url_raw( $image_url );
+    $site_host = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+    $image_host = wp_parse_url( $image_url, PHP_URL_HOST );
+
+    if ( empty( $image_url ) || empty( $site_host ) || empty( $image_host ) || strtolower( $site_host ) !== strtolower( $image_host ) ) {
+        return '';
+    }
+
+    return $image_url;
+}
+
+/**
+ * Use existing WordPress data to size the legacy admin builder controls.
+ */
+function pokedex_get_stored_pokemon_limit() {
+    global $wpdb;
+
+    $limit = $wpdb->get_var(
+        "SELECT MAX(CAST(meta_value AS UNSIGNED)) FROM {$wpdb->postmeta} WHERE meta_key = 'pokemon_id'"
+    );
+
+    return max( 1, (int) $limit );
+}
+
+function pokedex_search_query( $search_term ) {
+    $args = array(
+        'post_type'           => 'pokedex',
+        'post_status'         => 'publish',
+        'posts_per_page'      => 24,
+        'orderby'             => 'title',
+        'order'               => 'ASC',
+        'ignore_sticky_posts' => true,
+        'no_found_rows'       => true,
+    );
+
+    if ( preg_match( '/^#?0*([0-9]+)$/', $search_term, $matches ) ) {
+        $args['meta_query'] = array(
+            array(
+                'key'     => 'pokemon_id',
+                'value'   => (string) (int) $matches[1],
+                'compare' => '=',
+            ),
+        );
+    } else {
+        $args['s'] = $search_term;
+    }
+
+    return new WP_Query( $args );
+}
+
+function pokedex_search_shortcode() {
+    $search_term = '';
+
+    if ( isset( $_GET['pokedex_search'] ) ) {
+        $search_term = sanitize_text_field( wp_unslash( $_GET['pokedex_search'] ) );
+    }
+
+    $field_id = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'veefun-pokedex-search-' ) : 'veefun-pokedex-search';
+
+    ob_start();
+    ?>
+    <section class="veefun-pokedex-search" aria-labelledby="veefun-pokedex-search-heading">
+        <h2 id="veefun-pokedex-search-heading"><?php esc_html_e( 'Search the Pokédex', 'veefun' ); ?></h2>
+        <form class="search-form veefun-pokedex-search__form" method="get" action="<?php echo esc_url( home_url( '/pokedex/' ) ); ?>" role="search">
+            <label for="<?php echo esc_attr( $field_id ); ?>"><?php esc_html_e( 'Pokémon name or number', 'veefun' ); ?></label>
+            <input id="<?php echo esc_attr( $field_id ); ?>" class="search-field" type="search" name="pokedex_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php echo esc_attr__( 'Try Machop or 66', 'veefun' ); ?>" />
+            <button class="submit" type="submit"><?php esc_html_e( 'Search', 'veefun' ); ?></button>
+        </form>
+
+        <?php if ( '' !== $search_term ) : ?>
+            <?php $results = pokedex_search_query( $search_term ); ?>
+            <div class="veefun-pokedex-search__results" aria-live="polite">
+                <h3><?php echo esc_html( sprintf( __( 'Results for “%s”', 'veefun' ), $search_term ) ); ?></h3>
+
+                <?php if ( $results->have_posts() ) : ?>
+                    <div class="pokedex-archive-list">
+                        <?php while ( $results->have_posts() ) : $results->the_post(); ?>
+                            <?php
+                            $post_id      = get_the_ID();
+                            $pokemon_id   = pokedex_get_archive_card_id( $post_id );
+                            $pokemon_name = pokedex_get_archive_card_title( $post_id );
+                            $image_url    = pokedex_get_archive_card_image_url( $post_id );
+                            ?>
+                            <article <?php post_class( 'pokedex pokedex-archive-card' ); ?>>
+                                <a class="pokedex-archive-card__link" href="<?php the_permalink(); ?>">
+                                    <?php if ( '' !== $image_url ) : ?>
+                                        <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( '#' . $pokemon_id . ' ' . $pokemon_name ); ?>" loading="lazy" decoding="async" />
+                                    <?php endif; ?>
+                                    <span class="pokedex-archive-card__content">
+                                        <span class="entry-title"><?php echo esc_html( $pokemon_name ); ?></span>
+                                        <?php if ( '' !== (string) $pokemon_id ) : ?>
+                                            <span class="pokemon-id"><sup>#</sup><?php echo esc_html( $pokemon_id ); ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                </a>
+                            </article>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else : ?>
+                    <p><?php esc_html_e( 'No matching Pokémon were found in the stored Pokédex.', 'veefun' ); ?></p>
+                <?php endif; ?>
+            </div>
+            <?php wp_reset_postdata(); ?>
+        <?php endif; ?>
+    </section>
+    <?php
+
+    return ob_get_clean();
 }
 
 // Debug array
@@ -366,7 +550,7 @@ function poke_chain($array, $build = array(), $depth = 0) {
 
 // ADD_POKEMON
 // Add a page/pokemon to pokedex
-function add_pokemon($id, $tax = 'pokedex', $pokeCount ) {
+function add_pokemon($id, $tax, $pokeCount ) {
     $length = strlen((string) abs($pokeCount));
     $dreamWorld = true;
     // Pokémon Details

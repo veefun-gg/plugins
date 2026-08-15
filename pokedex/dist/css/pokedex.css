@@ -734,7 +734,7 @@ h1.page-title {
   margin-bottom: -20px;
 }
 #content {
-  background: #f4f4f4 url("https://pro-primetime-pokemon.local/wp-content/uploads/2021/09/bg-content-ltr-2d.jpg") repeat 0 0;
+  background: #f4f4f4 url("/wp-content/uploads/2021/09/bg-content-ltr-2d.jpg") repeat 0 0;
   background-size: 75% auto;
 }
 h1 a,
