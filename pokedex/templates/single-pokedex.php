@@ -133,6 +133,27 @@ if($current_id == 1) { $prev_id = 1025; }
 
 else { $prev_id = $current_id - 1; }
 
+$pokedex_navigation_name = static function ( $stored_name, $profile_slug ) {
+
+	$name = trim( wp_strip_all_tags( (string) $stored_name ) );
+
+	if ( '' !== $name ) {
+		$name = preg_replace( '/^#?\d+\s*/', '', $name );
+	}
+
+	if ( '' === $name ) {
+		$slug = sanitize_title( (string) $profile_slug );
+		$name = preg_replace( '/^\d+-/', '', $slug );
+		$name = ucwords( str_replace( '-', ' ', $name ) );
+	}
+
+	return '' !== $name ? $name : __( 'Pokémon', 'veefun' );
+
+};
+
+$previous_pokemon_name = $pokedex_navigation_name( $prev, $prev_class );
+$next_pokemon_name     = $pokedex_navigation_name( $next, $next_class );
+
 
 
 // POKESTATS
@@ -365,13 +386,14 @@ $pokeRand = rand(1,898);
 
 <section id="pokedex">
 
-<nav class="pokenav">
+<nav class="pokenav pokenav--subject" aria-label="<?php esc_attr_e( 'Pokédex subject navigation', 'veefun' ); ?>">
 
 		<div class="pokenav-link pokenev-left">
 
-			<a class="poke-nav-left" href="<?php echo site_url() . '/pokedex/' . $prev_class; ?>" title="<?php echo $prev; ?>">
+			<a class="poke-nav-left" href="<?php echo esc_url( site_url( '/pokedex/' . $prev_class ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Previous Pokémon: %s', 'veefun' ), $previous_pokemon_name ) ); ?>">
 
-				<i class="fal fa-long-arrow-left arrow-button"></i>
+				<span class="pokenav-arrow" aria-hidden="true">←</span>
+				<span class="pokenav-copy"><span class="pokenav-direction"><?php esc_html_e( 'Previous Pokémon', 'veefun' ); ?></span><span class="pokenav-target"><?php echo esc_html( $previous_pokemon_name ); ?></span></span>
 
 				<span class="poke-nav-thumb"<?php if ( ! empty( $prev_image ) ) : ?> style="background-image: url('<?php echo esc_url( $prev_image ); ?>');"<?php endif; ?>></span>
 
@@ -379,17 +401,17 @@ $pokeRand = rand(1,898);
 
 		</div>
 
-		<h1>
-
-			<span class="poke-name"><sup>#</sup><?php echo $current_id; ?> <b><?php echo $current_name; ?></b></span>
-
-		</h1>
+		<div class="pokedex-subject-heading">
+			<p class="pokedex-subject-scope"><?php esc_html_e( 'Pokédex subject', 'veefun' ); ?></p>
+			<h1 class="pokedex-subject-title">#<?php echo esc_html( $current_id ); ?> <?php echo esc_html( $current_name ); ?></h1>
+		</div>
 
 		<div class="pokenav-link pokenav-right">
 
-			<a class="poke-nav-right" href="<?php echo site_url() . '/pokedex/' . $next_class; ?>">
+			<a class="poke-nav-right" href="<?php echo esc_url( site_url( '/pokedex/' . $next_class ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Next Pokémon: %s', 'veefun' ), $next_pokemon_name ) ); ?>">
 
-				<i class="fal fa-long-arrow-right arrow-button"></i>
+				<span class="pokenav-copy"><span class="pokenav-direction"><?php esc_html_e( 'Next Pokémon', 'veefun' ); ?></span><span class="pokenav-target"><?php echo esc_html( $next_pokemon_name ); ?></span></span>
+				<span class="pokenav-arrow" aria-hidden="true">→</span>
 
 				<span class="poke-nav-thumb"<?php if ( ! empty( $next_image ) ) : ?> style="background-image: url('<?php echo esc_url( $next_image ); ?>');"<?php endif; ?>></span>
 
@@ -491,7 +513,7 @@ $pokeRand = rand(1,898);
 
 					<div class="poke-overview">
 
-						<h1><?php echo $current_name; ?></h1>
+						<p class="poke-overview-name"><?php echo esc_html( $current_name ); ?></p>
 
 						<span class="poke-cat"><?php echo $category; ?></span>
 
@@ -527,9 +549,9 @@ $pokeRand = rand(1,898);
 
 			<div class="poke-summary" style="flex-wrap: wrap;">
                 
-                <h1 class="summary-title">
-                    Pokédex • Pokémon <sup>#</sup><?php echo $current_id; ?> • <?php echo $current_name; ?>
-                </h1>
+                <p class="summary-title">
+                    <?php esc_html_e( 'Subject overview', 'veefun' ); ?>
+                </p>
 
 				<div class="poke-card poke-card-clean poke-description">
 
@@ -740,13 +762,14 @@ $pokeRand = rand(1,898);
             
     <div class="clear"></div>
     
-    <nav class="pokenav">
+    <nav class="pokenav pokenav--footer" aria-label="<?php esc_attr_e( 'More Pokédex subjects', 'veefun' ); ?>">
 
 		<div class="pokenav-link pokenev-left">
 
-			<a class="poke-nav-left" href="<?php echo site_url() . '/pokedex/' . $prev_class; ?>" title="<?php echo $prev; ?>">
+			<a class="poke-nav-left" href="<?php echo esc_url( site_url( '/pokedex/' . $prev_class ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Previous Pokémon: %s', 'veefun' ), $previous_pokemon_name ) ); ?>">
 
-				<i class="fal fa-long-arrow-left arrow-button"></i>
+				<span class="pokenav-arrow" aria-hidden="true">←</span>
+				<span class="pokenav-copy"><span class="pokenav-direction"><?php esc_html_e( 'Previous Pokémon', 'veefun' ); ?></span><span class="pokenav-target"><?php echo esc_html( $previous_pokemon_name ); ?></span></span>
 
 				<span class="poke-nav-thumb"<?php if ( ! empty( $prev_image ) ) : ?> style="background-image: url('<?php echo esc_url( $prev_image ); ?>');"<?php endif; ?>></span>
 
@@ -756,9 +779,10 @@ $pokeRand = rand(1,898);
 
 		<div class="pokenav-link pokenav-right">
 
-			<a class="poke-nav-right" href="<?php echo site_url() . '/pokedex/' . $next_class; ?>">
+			<a class="poke-nav-right" href="<?php echo esc_url( site_url( '/pokedex/' . $next_class ) ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Next Pokémon: %s', 'veefun' ), $next_pokemon_name ) ); ?>">
 
-				<i class="fal fa-long-arrow-right arrow-button"></i>
+				<span class="pokenav-copy"><span class="pokenav-direction"><?php esc_html_e( 'Next Pokémon', 'veefun' ); ?></span><span class="pokenav-target"><?php echo esc_html( $next_pokemon_name ); ?></span></span>
+				<span class="pokenav-arrow" aria-hidden="true">→</span>
 
 				<span class="poke-nav-thumb"<?php if ( ! empty( $next_image ) ) : ?> style="background-image: url('<?php echo esc_url( $next_image ); ?>');"<?php endif; ?>></span>
 
