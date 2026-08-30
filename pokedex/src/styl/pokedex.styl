@@ -520,7 +520,7 @@ ul
                             background cast(white 20%)
                             border 1px solid white
                             border-bottom 0
-            h1,h2
+            h1,h2,.poke-overview-name
                 font-family Karantina!important
                 font-weight 400
                 letter-spacing 1px
@@ -1274,10 +1274,86 @@ body.single-pokedex
         border-top 1px solid rgba(231, 246, 255, .08)
     #pokedex
         margin-top 56px
+    .pokenav
+        display grid
+        align-items center
+        gap 24px
+        margin 0 0 36px
+        padding 0 0 20px
+        border-bottom 1px solid rgba(231, 246, 255, .14)
+        &.pokenav--subject
+            grid-template-columns minmax(140px, 1fr) auto minmax(140px, 1fr)
+        &.pokenav--footer
+            grid-template-columns 1fr 1fr
+            margin 48px 0 0
+            padding 20px 0 0
+            border-top 1px solid rgba(231, 246, 255, .14)
+            border-bottom 0
+        .pokenav-link
+            min-width 0
+            &.pokenav-right
+                justify-self end
+            a
+                min-height 44px
+                display inline-flex
+                align-items center
+                gap 10px
+                padding 6px 4px
+                color var(--ast-global-color-3, #fff)
+                text-decoration none
+                &:hover
+                    text-decoration underline
+                    text-underline-offset 4px
+                &:focus-visible
+                    outline 2px solid currentColor
+                    outline-offset 4px
+            .poke-nav-thumb,
+            .arrow-button
+                display none
+        .pokenav-copy
+            display grid
+            gap 1px
+        .pokenav-direction
+            color rgba(231, 246, 255, .62)
+            font-size 11px
+            line-height 16px
+            font-weight 600
+            letter-spacing .06em
+            text-transform uppercase
+        .pokenav-target
+            font-size 15px
+            line-height 20px
+            font-weight 600
+        .pokenav-arrow
+            font-size 20px
+            line-height 1
+    .pokedex-subject-heading
+        min-width 0
+        text-align center
+    .pokedex-subject-scope
+        margin 0 0 5px
+        color rgba(231, 246, 255, .62)
+        font-size 12px
+        line-height 17px
+        font-weight 600
+        letter-spacing .08em
+        text-transform uppercase
+    .pokedex-subject-title
+        margin 0
+        color var(--ast-global-color-3, #fff)
+        font-size clamp(36px, 4.4vw, 56px)
+        line-height 1.05
+        font-weight 700
     #pokemon
         color var(--ast-global-color-3, #fff)
         .summary-title
-            color var(--ast-global-color-3, #fff)
+            color rgba(231, 246, 255, .62)
+            margin 0 0 20px
+            font-size 12px
+            line-height 17px
+            font-weight 600
+            letter-spacing .08em
+            text-transform uppercase
         .poke-card:not(.poke-card-clean)
             background-color rgba(15, 23, 42, .72)
             border-color rgba(231, 246, 255, .16)
@@ -1306,8 +1382,19 @@ body.single-pokedex
                     font-family "Poppins", sans-serif
         .poke-image
             .poke-image-placeholder
+                box-shadow inset 0 0 24px rgba(0, 0, 0, .1)
+                > svg
+                    opacity .16
+                > img
+                    align-self center
+                    height auto!important
+                    aspect-ratio 1 / 1
+                    object-fit contain
+                    margin-left auto
+                    margin-right auto
                 h1,
-                h2
+                h2,
+                .poke-overview-name
                     font-family "Poppins", sans-serif!important
                     font-weight 700
                     letter-spacing 0
@@ -1315,25 +1402,136 @@ body.single-pokedex
                 .poke-overview
                     font-family "Poppins", sans-serif
                     font-weight 600
+                    top 24px
+                    left 24px
+                    width calc(100% - 48px)
+                    display grid
+                    grid-template-columns minmax(0, 1fr) auto
+                    column-gap 16px
+                    align-items start
+                    .poke-overview-name
+                        margin 0
+                        font-size 30px
+                        line-height 36px
+                        -webkit-text-stroke-width 0
+                        text-shadow 0 1px 2px rgba(0, 0, 0, .35)
+                    .poke-cat
+                        grid-column 1
+                        padding 0
+                        font-size 16px
+                        line-height 22px
+                        color rgba(7, 6, 20, .82)
                     .poke-id
                         font-family "Poppins", sans-serif
                         font-weight 700
                         letter-spacing 0
+                        grid-column 2
+                        grid-row 1 / span 2
+                        position static
+                        font-size 48px
+                        line-height 52px
+                        opacity .78
+                        -webkit-text-stroke-width 0
+                        text-shadow 0 1px 2px rgba(0, 0, 0, .28)
+                        sup
+                            position static
+                            z-index auto
+                            margin-right 2px
+                            color currentColor
+                            font-size .5em
+                            line-height 1
+                            text-shadow none
+                            -webkit-text-stroke-width 0
             .poke-stats > ul li
                 .poke-stats-item-amount,
                 .poke-stats-item-title
                     font-family "Poppins", sans-serif
                     letter-spacing 0
+                .poke-stats-item-amount
+                    font-size 28px
+                    text-shadow 0 1px 2px rgba(0, 0, 0, .36)
+                    -webkit-text-stroke-width 0
                 .poke-stats-item-title
                     font-weight 700
+                    left 0
+                    width 100%
+                    font-size 14px
+                    line-height 24px
         .poke-card
             h2,
             h3
                 font-family "Poppins", sans-serif
+            h2
+                width auto
+                margin 0 0 16px
+                padding 0
+                font-size 24px
+                line-height 32px
+                font-weight 600
+                letter-spacing 0
             h2:before,
             h3:before
-                background-color rgba(244, 248, 255, .16)
-                background linear-gradient(90deg, rgba(244, 248, 255, .38) 0%, rgba(244, 248, 255, 0) 78%)
+                content none
+        .poke-profile > .poke-summary
+            .poke-card-clean
+                margin 0
+                padding 0
+            .poke-description
+                p
+                    margin 0 0 16px
+                    padding 0
+                    font-size 17px
+                    line-height 28px
+            .poke-types,
+            .poke-weaks
+                margin 24px 0 0
+                padding 24px 0 0
+                border-top 1px solid rgba(231, 246, 255, .14)
+            ul.poke-pills
+                gap 8px
+                > a
+                    min-height 44px
+                    display inline-flex
+                    align-items center
+                    border-radius 999px
+                    text-decoration none
+                    &:hover li
+                        border-color rgba(255, 255, 255, .34)
+                    &:focus-visible
+                        outline 2px solid currentColor
+                        outline-offset 3px
+                li
+                    min-height 30px
+                    margin 0
+                    padding 4px 8px 4px 6px
+                    border 1px solid rgba(255, 255, 255, .18)
+                    border-radius 999px
+                    box-shadow inset 0 0 0 999px rgba(7, 6, 20, .64)
+                    font-family "Poppins", sans-serif
+                    font-size 13px
+                    line-height 20px
+                    font-weight 600
+                    letter-spacing .01em
+                    text-transform none
+                    .icon
+                        display flex!important
+                        align-items center
+                        justify-content center
+                        min-width 18px
+                        width 18px
+                        height 18px
+                        margin 0
+                        svg
+                            position static
+                            width 14px
+                            height 14px
+                            max-width 14px
+                            max-height 14px
+                            transform none
+                            color #fff!important
+                    span
+                        padding 0 4px 0 6px
+                        color #fff!important
         ul.poke-details-list
             li
                 span:nth-child(2)
@@ -1359,3 +1557,155 @@ body.single-pokedex
             .poke-card.poke-card-half
                 display block
                 width 100%
+    @media(max-width 600px)
+        header.site-header
+            display block
+            padding 0
+        .site-branding a
+            margin 0
+        #content.site-content
+            padding-top 72px
+        #pokedex
+            margin-top 24px
+        .pokenav
+            gap 8px
+            margin-bottom 24px
+            padding-bottom 16px
+            &.pokenav--subject
+                grid-template-columns 44px minmax(0, 1fr) 44px
+            &.pokenav--footer
+                grid-template-columns 1fr 1fr
+                margin-top 36px
+                padding-top 16px
+            .pokenav-link a
+                width 44px
+                min-width 44px
+                justify-content center
+                padding 0
+            .pokenav-copy
+                display none
+        .pokedex-subject-scope
+            font-size 11px
+        .pokedex-subject-title
+            font-size 36px
+        #pokemon
+            .summary-title
+                margin-bottom 16px
+                font-size 11px
+                line-height 16px
+            .poke-card h2
+                margin-bottom 12px
+                font-size 22px
+                line-height 28px
+            .poke-profile > .poke-summary
+                .poke-description p
+                    font-size 16px
+                    line-height 26px
+                .poke-types,
+                .poke-weaks
+                    margin-top 20px
+                    padding-top 20px
+                ul.poke-pills li
+                    font-size 12px
+                    line-height 18px
+        #pokemon
+            padding 0
+            .poke-image
+                .poke-image-placeholder
+                    min-height 520px
+                    border-radius 8px
+                    box-shadow none
+                    > svg
+                        opacity .14
+                    > img
+                        width 82%
+                        max-width 240px
+                        max-height none
+                        height auto!important
+                        margin 112px auto 156px
+                    .poke-overview
+                        top 20px
+                        left 20px
+                        width calc(100% - 40px)
+                        display grid
+                        grid-template-columns minmax(0, 1fr) auto
+                        column-gap 12px
+                        align-items start
+                        .poke-overview-name
+                            margin 0
+                            font-size 24px
+                            line-height 30px
+                            -webkit-text-stroke-width 0
+                            text-shadow 0 1px 2px rgba(0, 0, 0, .35)
+                        .poke-cat
+                            grid-column 1
+                            padding 0
+                            font-size 14px
+                            line-height 20px
+                            color rgba(7, 6, 20, .82)
+                        .poke-id
+                            grid-column 2
+                            grid-row 1 / span 2
+                            position static
+                            font-size 38px
+                            line-height 42px
+                            opacity .78
+                            -webkit-text-stroke-width 0
+                            text-shadow 0 1px 2px rgba(0, 0, 0, .28)
+                            sup
+                                position static
+                                z-index auto
+                                margin-right 2px
+                                color currentColor
+                                font-size .5em
+                                line-height 1
+                                text-shadow none
+                                -webkit-text-stroke-width 0
+                    .poke-stats
+                        height auto
+                        max-height none
+                        z-index 2
+                        background rgba(7, 6, 20, .84)
+                        border-top 1px solid rgba(255, 255, 255, .24)
+                        & > ul
+                            display grid
+                            grid-template-columns repeat(3, minmax(0, 1fr))
+                            height auto
+                            width 100%
+                            margin 0
+                            li
+                                min-width 0
+                                min-height 64px
+                                display flex
+                                flex-direction column
+                                justify-content center
+                                align-items center
+                                gap 2px
+                                padding 8px 4px
+                                box-sizing border-box
+                                border-right 1px solid rgba(255, 255, 255, .12)
+                                border-bottom 1px solid rgba(255, 255, 255, .12)
+                                &:nth-child(3n)
+                                    border-right 0
+                                &:nth-child(n+4)
+                                    border-bottom 0
+                                .poke-stats-bar-fill
+                                    display none
+                                .poke-stats-item-amount,
+                                .poke-stats-item-title
+                                    position static
+                                    width auto
+                                    height auto
+                                    text-align center
+                                    text-shadow none
+                                    -webkit-text-stroke-width 0
+                                .poke-stats-item-amount
+                                    font-size 18px
+                                    line-height 24px
+                                    color #fff
+                                .poke-stats-item-title
+                                    font-size 11px
+                                    line-height 16px
+                                    font-weight 600
+                                    color rgba(255, 255, 255, .74)
+                                    white-space nowrap

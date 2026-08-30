@@ -82,6 +82,132 @@ function ptp_priceguide_local_image_url( $cache, $size = 'large' ) {
     return '';
 }
 
+function ptp_priceguide_printing_scope_label( $data ) {
+    $set_name      = ptp_priceguide_nested_scalar_field( $data, 'set', 'name', '' );
+    $card_number   = ptp_priceguide_scalar_field( $data, 'number', '' );
+    $printed_total = ptp_priceguide_nested_scalar_field( $data, 'set', 'printedTotal', '' );
+    $scope_parts   = array();
+
+    if ( '' !== $set_name ) {
+        $scope_parts[] = $set_name;
+    }
+
+    if ( '' !== $card_number ) {
+        $number_scope = $card_number;
+
+        if ( '' !== $printed_total ) {
+            $number_scope .= ' / ' . $printed_total;
+        }
+
+        $scope_parts[] = $number_scope;
+    }
+
+    return implode( ' · ', $scope_parts );
+}
+
+function ptp_priceguide_card_image_alt( $data, $card_name ) {
+    $set_name      = ptp_priceguide_nested_scalar_field( $data, 'set', 'name', '' );
+    $card_number   = ptp_priceguide_scalar_field( $data, 'number', '' );
+    $printed_total = ptp_priceguide_nested_scalar_field( $data, 'set', 'printedTotal', '' );
+    $description   = (string) $card_name . ' trading card';
+
+    if ( '' !== $set_name ) {
+        $description .= ' from ' . $set_name;
+    }
+
+    if ( '' !== $card_number ) {
+        $description .= ', number ' . $card_number;
+
+        if ( '' !== $printed_total ) {
+            $description .= ' of ' . $printed_total;
+        }
+    }
+
+    return $description . '.';
+}
+
+function ptp_priceguide_subject_slug( $data, $card_name ) {
+    $pokedex_numbers = ptp_priceguide_array_field( $data, 'nationalPokedexNumbers' );
+
+    if ( 1 !== count( $pokedex_numbers ) || ! is_numeric( $pokedex_numbers[0] ) ) {
+        return '';
+    }
+
+    return sanitize_title( (int) $pokedex_numbers[0] . ' ' . $card_name );
+}
+
+function ptp_priceguide_exact_subject_post_id( $data, $card_name ) {
+    static $subject_ids = array();
+
+    $card_name = trim( wp_strip_all_tags( (string) $card_name ) );
+    $subject_slug = ptp_priceguide_subject_slug( $data, $card_name );
+
+    if ( '' === $card_name || '' === $subject_slug ) {
+        return 0;
+    }
+
+    if ( array_key_exists( $subject_slug, $subject_ids ) ) {
+        return $subject_ids[$subject_slug];
+    }
+
+    if ( ! function_exists( 'post_type_exists' ) || ! post_type_exists( 'pokedex' ) || ! class_exists( 'WP_Query' ) ) {
+        $subject_ids[$subject_slug] = 0;
+        return 0;
+    }
+
+    $subject_query = new WP_Query(
+        array(
+            'post_type'           => 'pokedex',
+            'post_status'         => 'publish',
+            'posts_per_page'      => 1,
+            'name'                => $subject_slug,
+            'fields'              => 'ids',
+            'no_found_rows'       => true,
+            'ignore_sticky_posts' => true,
+        )
+    );
+
+    $subject_ids[$subject_slug] = ! empty( $subject_query->posts[0] ) ? (int) $subject_query->posts[0] : 0;
+
+    return $subject_ids[$subject_slug];
+}
+
+function ptp_priceguide_render_card_identity( $data, $card_name ) {
+    $set_name        = ptp_priceguide_nested_scalar_field( $data, 'set', 'name', 'Unknown set' );
+    $card_number     = ptp_priceguide_scalar_field( $data, 'number', 'Unknown' );
+    $printed_total   = ptp_priceguide_nested_scalar_field( $data, 'set', 'printedTotal', '' );
+    $number_scope    = $card_number;
+    $subject_post_id = ptp_priceguide_exact_subject_post_id( $data, $card_name );
+
+    if ( '' !== $printed_total ) {
+        $number_scope .= ' / ' . $printed_total;
+    }
+
+    $content  = '<section class="pg-object-identity" aria-label="Card identity">';
+    $content .= '<p class="pg-object-identity__eyebrow">' . esc_html__( 'Exact printing', 'primetimepriceguide' ) . '</p>';
+    $content .= '<dl class="pg-object-identity__scope">';
+    $content .= '<div><dt>' . esc_html__( 'Set', 'primetimepriceguide' ) . '</dt><dd>' . esc_html( $set_name ) . '</dd></div>';
+    $content .= '<div><dt>' . esc_html__( 'Card number', 'primetimepriceguide' ) . '</dt><dd>' . esc_html( $number_scope ) . '</dd></div>';
+    $content .= '</dl>';
+
+    if ( $subject_post_id ) {
+        $content .= '<div class="pg-object-identity__subject">';
+        $content .= '<p>' . sprintf(
+            esc_html__( 'This printing is part of the broader %s collector subject.', 'primetimepriceguide' ),
+            '<strong>' . esc_html( $card_name ) . '</strong>'
+        ) . '</p>';
+        $content .= '<a href="' . esc_url( get_permalink( $subject_post_id ) ) . '">' . sprintf(
+            esc_html__( 'Explore %s as a Pokémon', 'primetimepriceguide' ),
+            esc_html( $card_name )
+        ) . '<span aria-hidden="true"> →</span></a>';
+        $content .= '</div>';
+    }
+
+    $content .= '</section>';
+
+    return $content;
+}
+
 function ptp_priceguide_unavailable_pricing_view_model() {
     return array(
         'has_current_price'   => false,
@@ -346,17 +472,22 @@ function filter_the_title_in_the_main_loop( $title ) {
                 $types = implode(", ",$subtypes);
             }
 
-            $supertype = ptp_priceguide_scalar_field( $data, 'supertype', '' );
-            $hp = ptp_priceguide_scalar_field( $data, 'hp', '' );
+            $supertype      = ptp_priceguide_scalar_field( $data, 'supertype', '' );
+            $hp             = ptp_priceguide_scalar_field( $data, 'hp', '' );
+            $card_name      = ! empty( $cache->name ) ? $cache->name : ptp_priceguide_scalar_field( $data, 'name', $title );
+            $printing_scope = ptp_priceguide_printing_scope_label( $data );
 
-            $title = ! empty( $cache->name ) ? $cache->name : ptp_priceguide_scalar_field( $data, 'name', $title );
-            $title .= '<br/><small>'.$supertype.'';
+            $title = esc_html( $card_name );
+            if ( '' !== $printing_scope ) {
+                $title .= '<small class="pg-title-printing">' . esc_html( $printing_scope ) . '</small>';
+            }
+            $title .= '<small class="pg-title-type">' . esc_html( $supertype );
             if(!empty($types)) {
-                $title .= '- '.$types.'';
+                $title .= ' · ' . esc_html( $types );
             }
             $title .= '</small>';
             if($hp) {
-                $title .= '<span>HP '.$hp.'</span>';
+                $title .= '<span class="pg-title-hp">HP ' . esc_html( $hp ) . '</span>';
             }
 
         }
@@ -408,13 +539,19 @@ function filter_the_content_in_the_main_loop( $content ) {
         $set_name = ptp_priceguide_nested_scalar_field( $data, 'set', 'name', 'Unknown Set' );
         $printed_total = ptp_priceguide_nested_scalar_field( $data, 'set', 'printedTotal', 'N/A' );
         $image_large = ptp_priceguide_local_image_url( $cache, 'large' );
+        $image_alt = ptp_priceguide_card_image_alt( $data, $card_name );
+        $image_link_label = sprintf(
+            esc_html__( 'Find %s on eBay (opens in a new tab)', 'primetimepriceguide' ),
+            rtrim( $image_alt, '.' )
+        );
 
-        $content = '<div class="pg-wrapper">';
+        $content = ptp_priceguide_render_card_identity( $data, $card_name );
+        $content .= '<div class="pg-wrapper">';
         
             $content .= '<div class="third padding50r">';
 
                 if ( ! empty( $image_large ) ) {
-                    $content .= '<a rel="sponsored" href="https://www.ebay.com/sch/i.html?_nkw='.$card_name.'+'.$set_name.'&mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5338833587&customid=&toolid=10001&mkevt=1" target="_blank"><img src="'.$image_large.'" /></a>';
+                    $content .= '<a rel="sponsored noopener" aria-label="' . esc_attr( $image_link_label ) . '" href="https://www.ebay.com/sch/i.html?_nkw='.$card_name.'+'.$set_name.'&mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5338833587&customid=&toolid=10001&mkevt=1" target="_blank"><img src="' . esc_url( $image_large ) . '" alt="' . esc_attr( $image_alt ) . '" /></a>';
                 } else {
                     $content .= '<p>Image unavailable.</p>';
                 }
