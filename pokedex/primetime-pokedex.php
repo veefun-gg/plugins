@@ -254,7 +254,7 @@ function pokedex_custom(){
         return;
     }
 
-    wp_enqueue_style('pokedex_custom_css', plugins_url("/dist/css/pokedex.css", __FILE__), array(), '1.2.3');
+    wp_enqueue_style('pokedex_custom_css', plugins_url("/dist/css/pokedex.css", __FILE__), array(), '1.2.4');
 }
 function pokedex_awesome_icons(){
     if ( ! is_singular( 'pokedex' ) ) {
@@ -268,6 +268,26 @@ function pokedex_awesome_icons(){
 //remove_action('woocommerce_before_main_content', 'woocommerce_breadcrumb', 20, 0);
 
 // UTILITY
+/**
+ * Return the one adopted exact-printing bridge owned by the Pokédex.
+ *
+ * This deliberately bounded map is independent of Price Guide PHP and data.
+ */
+function pokedex_get_exact_printing_relationship( $pokemon_id ) {
+    if ( ! is_scalar( $pokemon_id ) || 66 !== (int) $pokemon_id ) {
+        return array();
+    }
+
+    return array(
+        'pokemon_id'  => 66,
+        'display_id'  => '066',
+        'set_id'      => 'base1',
+        'card_id'     => 'base1-52',
+        'destination' => '/price-guide/machop/base1-52/',
+        'label'       => 'View Machop — Base Set 52/102',
+    );
+}
+
 // Convert inches to feet and inches (0'0")
 function in_feet($in) {
     $feet = intval($in/12);

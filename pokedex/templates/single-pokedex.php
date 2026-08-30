@@ -153,6 +153,10 @@ $pokedex_navigation_name = static function ( $stored_name, $profile_slug ) {
 
 $previous_pokemon_name = $pokedex_navigation_name( $prev, $prev_class );
 $next_pokemon_name     = $pokedex_navigation_name( $next, $next_class );
+$exact_printing_relationship = pokedex_get_exact_printing_relationship( $current_id );
+$current_display_id = ! empty( $exact_printing_relationship['display_id'] )
+	? $exact_printing_relationship['display_id']
+	: str_pad( (string) (int) $current_id, 3, '0', STR_PAD_LEFT );
 
 
 
@@ -401,9 +405,9 @@ $pokeRand = rand(1,898);
 
 		</div>
 
-		<div class="pokedex-subject-heading">
+		<div class="pokedex-subject-heading vf-c-object-identity">
 			<p class="pokedex-subject-scope"><?php esc_html_e( 'Pokédex subject', 'veefun' ); ?></p>
-			<h1 class="pokedex-subject-title">#<?php echo esc_html( $current_id ); ?> <?php echo esc_html( $current_name ); ?></h1>
+			<h1 class="pokedex-subject-title"><data value="<?php echo esc_attr( (string) (int) $current_id ); ?>">#<?php echo esc_html( $current_display_id ); ?></data> <?php echo esc_html( $current_name ); ?></h1>
 		</div>
 
 		<div class="pokenav-link pokenav-right">
@@ -420,6 +424,16 @@ $pokeRand = rand(1,898);
 		</div>
 
 	</nav>
+
+	<section class="pokedex-printing-relationship vf-o-cluster <?php echo $exact_printing_relationship ? 'has-relationship' : 'is-unavailable'; ?>" aria-label="<?php esc_attr_e( 'Exact printing relationship', 'veefun' ); ?>">
+		<?php if ( $exact_printing_relationship ) : ?>
+			<nav class="pokedex-printing-relationship__nav" aria-label="<?php esc_attr_e( 'Exact printing navigation', 'veefun' ); ?>">
+				<a class="pokedex-printing-relationship__link vf-c-relationship-link vf-c-action" href="<?php echo esc_url( site_url( $exact_printing_relationship['destination'] ) ); ?>"><?php echo esc_html( $exact_printing_relationship['label'] ); ?></a>
+			</nav>
+		<?php else : ?>
+			<p class="pokedex-printing-relationship__unavailable vf-c-empty-state is-unavailable"><?php esc_html_e( 'Exact printing relationship unavailable for this Pokémon.', 'veefun' ); ?></p>
+		<?php endif; ?>
+	</section>
 
 
 
