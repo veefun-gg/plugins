@@ -44,6 +44,33 @@ function esc_html__( $value, $domain = '' ) {
     return $value;
 }
 
+function esc_url( $value ) {
+    return (string) $value;
+}
+
+function sanitize_title( $value ) {
+    $value = strtolower( trim( (string) $value ) );
+    $value = preg_replace( '/[^a-z0-9]+/', '-', $value );
+    return trim( $value, '-' );
+}
+
+function post_type_exists( $post_type ) {
+    return 'pokedex' === $post_type;
+}
+
+function get_permalink( $post_id ) {
+    return 'http://veefun.local/pokedex/66-machop/';
+}
+
+class WP_Query {
+    public $posts = array();
+
+    public function __construct( $arguments ) {
+        $GLOBALS['price_guide_subject_query_arguments'] = $arguments;
+        $this->posts = array( 1524 );
+    }
+}
+
 require_once dirname( __DIR__ ) . '/functions/06-page-template.php';
 require_once dirname( __DIR__ ) . '/functions/08-related-editorial.php';
 
@@ -187,6 +214,34 @@ assert_same( 0, preg_match( '/\b(?:INSERT|UPDATE|DELETE|REPLACE|ALTER|CREATE|DRO
 assert_contains( "base1-52'' unsafe", $database->queries[0], 'card id is passed through prepared-query escaping' );
 assert_same( '$2.75', $model['current_display'], 'SELECT result builds current pricing' );
 assert_same( '+$0.25 (+10.00%)', $model['delta_display'], 'SELECT result builds prior-snapshot trend' );
+
+$card_data = array(
+    'set'    => array(
+        'name'         => 'Base',
+        'printedTotal' => '102',
+    ),
+    'number'                 => '52',
+    'nationalPokedexNumbers' => array( 66 ),
+);
+assert_same( 'Base · 52 / 102', ptp_priceguide_printing_scope_label( $card_data ), 'printing label keeps exact set and number together' );
+assert_same( 'Machop trading card from Base, number 52 of 102.', ptp_priceguide_card_image_alt( $card_data, 'Machop' ), 'primary image alt identifies the exact card' );
+
+$identity_html = ptp_priceguide_render_card_identity( $card_data, 'Machop' );
+assert_same( 'pokedex', $GLOBALS['price_guide_subject_query_arguments']['post_type'], 'subject lookup stays within the Pokédex object type' );
+assert_same( 'publish', $GLOBALS['price_guide_subject_query_arguments']['post_status'], 'subject lookup exposes only published subjects' );
+assert_same( '66-machop', ptp_priceguide_subject_slug( $card_data, 'Machop' ), 'subject slug preserves the card Pokédex number and name' );
+assert_same( '66-machop', $GLOBALS['price_guide_subject_query_arguments']['name'], 'subject lookup requires an exact numbered subject slug' );
+assert_contains( 'aria-label="Card identity"', $identity_html, 'identity region has an accessible name' );
+assert_contains( '<dt>Set</dt><dd>Base</dd>', $identity_html, 'identity region promotes set scope before pricing' );
+assert_contains( '<dt>Card number</dt><dd>52 / 102</dd>', $identity_html, 'identity region promotes card-number scope before pricing' );
+assert_contains( 'href="http://veefun.local/pokedex/66-machop/"', $identity_html, 'exact subject match provides a direct return path' );
+assert_contains( 'Explore Machop as a Pokémon', $identity_html, 'subject return path explains its destination' );
+
+$ambiguous_card_data = $card_data;
+$ambiguous_card_data['nationalPokedexNumbers'] = array( 66, 67 );
+assert_same( '', ptp_priceguide_subject_slug( $ambiguous_card_data, 'Machop & Machoke' ), 'multi-subject cards fail closed instead of guessing a destination' );
+$ambiguous_identity_html = ptp_priceguide_render_card_identity( $ambiguous_card_data, 'Machop & Machoke' );
+assert_not_contains( 'pg-object-identity__subject', $ambiguous_identity_html, 'ambiguous cards do not render a guessed subject journey' );
 
 $fallback_html = ptp_priceguide_render_pricing_view_model( 'base1-52', ptp_priceguide_unavailable_pricing_view_model() );
 assert_contains( 'aria-busy="false"', $fallback_html, 'fallback markup is settled immediately' );
