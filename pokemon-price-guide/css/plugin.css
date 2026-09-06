@@ -258,6 +258,7 @@
     gap: 12px 32px;
     padding: 24px 5px;
     border-bottom: 1px solid #666;
+    color: inherit;
 }
 
 .single-price-guide .pg-object-identity__eyebrow {
@@ -315,8 +316,82 @@
 }
 
 .single-price-guide .pg-object-identity__subject a:focus-visible {
-    outline: 2px solid currentColor;
+    outline: 3px solid currentColor;
     outline-offset: 4px;
+}
+
+.single-price-guide .pg-object-identity__subject-unavailable {
+    align-self: end;
+}
+
+.single-price-guide .pg-printing-image {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.single-price-guide .pg-printing-image-unavailable {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.single-price-guide .ptp-pricing-summary {
+    clear: both;
+    color: inherit;
+    margin: 20px 0;
+}
+
+.single-price-guide .pg-object-identity__subject-unavailable,
+.single-price-guide .pg-printing-image-unavailable,
+.single-price-guide .ptp-pricing-unavailable,
+.single-price-guide .ptp-pricing-trend-unavailable {
+    color: inherit;
+}
+
+.single-price-guide .ptp-pricing-current {
+    float: none;
+    width: 100%;
+}
+
+.single-price-guide .ptp-pricing-value {
+    margin: 0;
+    font-size: 28px;
+    line-height: 36px;
+    font-variant-numeric: tabular-nums;
+}
+
+.single-price-guide .ptp-pricing-trend {
+    margin: 0;
+}
+
+.single-price-guide .ptp-pricing-evidence {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 24px;
+    margin: 0;
+    padding: 16px 0 0;
+    border-top: 1px solid #666;
+}
+
+.single-price-guide .ptp-pricing-evidence div {
+    min-width: 0;
+}
+
+.single-price-guide .ptp-pricing-evidence dt {
+    margin: 0 0 2px;
+    color: #aaa;
+    font-size: 12px;
+    line-height: 17px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.single-price-guide .ptp-pricing-evidence dd {
+    margin: 0;
+    font-size: 14px;
+    line-height: 20px;
 }
 
 .single-price-guide .pg-wrapper {
@@ -1011,6 +1086,9 @@
     }
     .single-price-guide .pg-object-identity__eyebrow {
         grid-column: 1;
+    }
+    .single-price-guide .ptp-pricing-evidence {
+        grid-template-columns: 1fr;
     }
     .padding50r {
         padding: 20px 0;

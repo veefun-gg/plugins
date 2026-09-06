@@ -1277,7 +1277,8 @@ body.single-pokedex
     .pokenav
         display grid
         align-items center
-        gap 24px
+        row-gap 24px
+        column-gap 24px
         margin 0 0 36px
         padding 0 0 20px
         border-bottom 1px solid rgba(231, 246, 255, .14)
@@ -1297,7 +1298,8 @@ body.single-pokedex
                 min-height 44px
                 display inline-flex
                 align-items center
-                gap 10px
+                row-gap 10px
+                column-gap 10px
                 padding 6px 4px
                 color var(--ast-global-color-3, #fff)
                 text-decoration none
@@ -1305,14 +1307,15 @@ body.single-pokedex
                     text-decoration underline
                     text-underline-offset 4px
                 &:focus-visible
-                    outline 2px solid currentColor
+                    outline 3px solid currentColor
                     outline-offset 4px
             .poke-nav-thumb,
             .arrow-button
                 display none
         .pokenav-copy
             display grid
-            gap 1px
+            row-gap 1px
+            column-gap 1px
         .pokenav-direction
             color rgba(231, 246, 255, .62)
             font-size 11px
@@ -1344,6 +1347,27 @@ body.single-pokedex
         font-size clamp(36px, 4.4vw, 56px)
         line-height 1.05
         font-weight 700
+        data
+            color inherit
+    .pokedex-printing-relationship
+        justify-content center
+        margin -12px 0 36px
+        &__nav
+            display flex
+        &__link
+            background rgba(231, 246, 255, .08)
+            border-color rgba(231, 246, 255, .28)
+            color var(--ast-global-color-3, #fff)
+            &:hover
+                background rgba(231, 246, 255, .14)
+                border-color rgba(231, 246, 255, .42)
+                color var(--ast-global-color-3, #fff)
+            &:focus-visible
+                outline 3px solid currentColor
+                outline-offset 4px
+        &__unavailable
+            border-inline-start-color rgba(231, 246, 255, .35)
+            color rgba(231, 246, 255, .72)
     #pokemon
         color var(--ast-global-color-3, #fff)
         .summary-title
@@ -1488,7 +1512,8 @@ body.single-pokedex
                 padding 24px 0 0
                 border-top 1px solid rgba(231, 246, 255, .14)
             ul.poke-pills
-                gap 8px
+                row-gap 8px
+                column-gap 8px
                 > a
                     min-height 44px
                     display inline-flex
@@ -1568,7 +1593,8 @@ body.single-pokedex
         #pokedex
             margin-top 24px
         .pokenav
-            gap 8px
+            row-gap 8px
+            column-gap 8px
             margin-bottom 24px
             padding-bottom 16px
             &.pokenav--subject
@@ -1588,6 +1614,9 @@ body.single-pokedex
             font-size 11px
         .pokedex-subject-title
             font-size 36px
+        .pokedex-printing-relationship
+            margin -8px 0 24px
+            padding 0 16px
         #pokemon
             .summary-title
                 margin-bottom 16px
@@ -1680,7 +1709,8 @@ body.single-pokedex
                                 flex-direction column
                                 justify-content center
                                 align-items center
-                                gap 2px
+                                row-gap 2px
+                                column-gap 2px
                                 padding 8px 4px
                                 box-sizing border-box
                                 border-right 1px solid rgba(255, 255, 255, .12)

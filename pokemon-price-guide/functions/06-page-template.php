@@ -159,7 +159,7 @@ function ptp_priceguide_exact_subject_post_id( $data, $card_name ) {
         array(
             'post_type'           => 'pokedex',
             'post_status'         => 'publish',
-            'posts_per_page'      => 1,
+            'posts_per_page'      => 2,
             'name'                => $subject_slug,
             'fields'              => 'ids',
             'no_found_rows'       => true,
@@ -167,40 +167,63 @@ function ptp_priceguide_exact_subject_post_id( $data, $card_name ) {
         )
     );
 
-    $subject_ids[$subject_slug] = ! empty( $subject_query->posts[0] ) ? (int) $subject_query->posts[0] : 0;
+    $subject_ids[$subject_slug] = 1 === count( $subject_query->posts ) && ! empty( $subject_query->posts[0] )
+        ? (int) $subject_query->posts[0]
+        : 0;
 
     return $subject_ids[$subject_slug];
 }
 
-function ptp_priceguide_render_card_identity( $data, $card_name ) {
+function ptp_priceguide_render_card_identity( $data, $card_name, $card_id = '' ) {
     $set_name        = ptp_priceguide_nested_scalar_field( $data, 'set', 'name', 'Unknown set' );
+    $set_id          = trim( (string) ptp_priceguide_nested_scalar_field( $data, 'set', 'id', '' ) );
     $card_number     = ptp_priceguide_scalar_field( $data, 'number', 'Unknown' );
     $printed_total   = ptp_priceguide_nested_scalar_field( $data, 'set', 'printedTotal', '' );
     $number_scope    = $card_number;
+    $card_id         = trim( (string) $card_id );
+    $pokedex_numbers = ptp_priceguide_array_field( $data, 'nationalPokedexNumbers' );
+    $subject_display_id = 1 === count( $pokedex_numbers ) && is_numeric( $pokedex_numbers[0] )
+        ? str_pad( (string) (int) $pokedex_numbers[0], 3, '0', STR_PAD_LEFT )
+        : '';
     $subject_post_id = ptp_priceguide_exact_subject_post_id( $data, $card_name );
 
-    if ( '' !== $printed_total ) {
-        $number_scope .= ' / ' . $printed_total;
+    if ( '' === $card_id ) {
+        $card_id = trim( (string) ptp_priceguide_scalar_field( $data, 'id', '' ) );
     }
 
-    $content  = '<section class="pg-object-identity" aria-label="Card identity">';
+    if ( '' !== $printed_total ) {
+        $number_scope .= '/' . $printed_total;
+    }
+
+    $identity_state = $subject_post_id ? 'has-relationship' : 'is-unavailable';
+    $set_identity = '' !== $set_id
+        ? '<data value="' . esc_attr( $set_id ) . '">' . esc_html( $set_name ) . '</data>'
+        : esc_html( $set_name );
+    $card_identity = '' !== $card_id
+        ? '<data value="' . esc_attr( $card_id ) . '">' . esc_html( $number_scope ) . '</data>'
+        : esc_html( $number_scope );
+
+    $content  = '<section class="pg-object-identity vf-c-object-identity vf-o-stack ' . esc_attr( $identity_state ) . '" aria-label="Card identity">';
     $content .= '<p class="pg-object-identity__eyebrow">' . esc_html__( 'Exact printing', 'primetimepriceguide' ) . '</p>';
     $content .= '<dl class="pg-object-identity__scope">';
-    $content .= '<div><dt>' . esc_html__( 'Set', 'primetimepriceguide' ) . '</dt><dd>' . esc_html( $set_name ) . '</dd></div>';
-    $content .= '<div><dt>' . esc_html__( 'Card number', 'primetimepriceguide' ) . '</dt><dd>' . esc_html( $number_scope ) . '</dd></div>';
+    $content .= '<div><dt>' . esc_html__( 'Set', 'primetimepriceguide' ) . '</dt><dd>' . $set_identity . '</dd></div>';
+    $content .= '<div><dt>' . esc_html__( 'Card number', 'primetimepriceguide' ) . '</dt><dd>' . $card_identity . '</dd></div>';
     $content .= '</dl>';
 
     if ( $subject_post_id ) {
-        $content .= '<div class="pg-object-identity__subject">';
+        $content .= '<div class="pg-object-identity__subject vf-o-stack">';
         $content .= '<p>' . sprintf(
             esc_html__( 'This printing is part of the broader %s collector subject.', 'primetimepriceguide' ),
             '<strong>' . esc_html( $card_name ) . '</strong>'
         ) . '</p>';
-        $content .= '<a href="' . esc_url( get_permalink( $subject_post_id ) ) . '">' . sprintf(
-            esc_html__( 'Explore %s as a Pokémon', 'primetimepriceguide' ),
-            esc_html( $card_name )
-        ) . '<span aria-hidden="true"> →</span></a>';
+        $content .= '<a class="pg-object-identity__subject-link vf-c-relationship-link vf-c-action" href="' . esc_url( get_permalink( $subject_post_id ) ) . '">' . sprintf(
+            esc_html__( 'View %1$s — Pokémon #%2$s', 'primetimepriceguide' ),
+            esc_html( $card_name ),
+            esc_html( $subject_display_id )
+        ) . '</a>';
         $content .= '</div>';
+    } else {
+        $content .= '<p class="pg-object-identity__subject-unavailable vf-c-empty-state is-unavailable">' . esc_html__( 'Related Pokémon subject unavailable for this printing.', 'primetimepriceguide' ) . '</p>';
     }
 
     $content .= '</section>';
@@ -214,6 +237,7 @@ function ptp_priceguide_unavailable_pricing_view_model() {
         'has_trend'           => false,
         'price_type'          => '',
         'price_type_label'    => '',
+        'treatment_label'     => '',
         'current_price'       => null,
         'current_display'     => '',
         'current_logged_date' => '',
@@ -307,6 +331,12 @@ function ptp_priceguide_build_pricing_view_model( $rows ) {
         'reverseHolofoil'    => 'Reverse holofoil market price',
         'reverseholofoil'    => 'Reverse holofoil market price',
     );
+    $treatment_labels = array(
+        'normal'             => 'Normal',
+        'holofoil'           => 'Holofoil',
+        'reverseHolofoil'    => 'Reverse holofoil',
+        'reverseholofoil'    => 'Reverse holofoil',
+    );
     $selected_type = '';
 
     foreach ( array( 'normal', 'holofoil', 'reverseHolofoil', 'reverseholofoil' ) as $preferred_type ) {
@@ -325,6 +355,7 @@ function ptp_priceguide_build_pricing_view_model( $rows ) {
     $model['has_current_price']   = true;
     $model['price_type']          = $selected_type;
     $model['price_type_label']    = $type_labels[$selected_type];
+    $model['treatment_label']     = $treatment_labels[$selected_type];
     $model['current_price']       = $current['price'];
     $model['current_display']     = '$' . number_format( $current['price'], 2, '.', ',' );
     $model['current_logged_date'] = $current['logged_date'];
@@ -389,7 +420,8 @@ function ptp_priceguide_get_pricing_view_model( $card_id, $database = null ) {
 }
 
 function ptp_priceguide_render_pricing_view_model( $card_id, $model ) {
-    $content = '<div class="ptp-pricing-summary" id="result_' . esc_attr( $card_id ) . '" aria-busy="false">';
+    $evidence_state = ! empty( $model['has_current_price'] ) ? 'has-evidence' : 'is-unavailable';
+    $content = '<div class="ptp-pricing-summary vf-c-evidence-status vf-o-stack ' . esc_attr( $evidence_state ) . '" id="result_' . esc_attr( $card_id ) . '" aria-busy="false">';
 
     if ( ! empty( $model['has_current_price'] ) ) {
         $content .= '<div class="quarter ptp-pricing-current">';
@@ -397,7 +429,7 @@ function ptp_priceguide_render_pricing_view_model( $card_id, $model ) {
             $content .= '<p class="ptp-pricing-value">' . esc_html( $model['current_display'] ) . '</p>';
         $content .= '</div>';
     } else {
-        $content .= '<p class="ptp-pricing-unavailable">' . esc_html( $model['current_message'] ) . '</p>';
+        $content .= '<p class="ptp-pricing-unavailable vf-c-empty-state is-unavailable">' . esc_html( $model['current_message'] ) . '</p>';
     }
 
     if ( ! empty( $model['has_trend'] ) ) {
@@ -406,11 +438,27 @@ function ptp_priceguide_render_pricing_view_model( $card_id, $model ) {
             $content .= '<strong>' . esc_html( $model['delta_display'] ) . '</strong>';
         $content .= '</p>';
     } else {
-        $content .= '<p class="ptp-pricing-trend-unavailable">' . esc_html( $model['trend_message'] ) . '</p>';
+        $content .= '<p class="ptp-pricing-trend-unavailable vf-c-empty-state is-unavailable">' . esc_html( $model['trend_message'] ) . '</p>';
     }
 
-    if ( ! empty( $model['current_logged_date'] ) ) {
-        $content .= '<small class="ptp-pricing-snapshot">' . esc_html__( 'Cached snapshot: ', 'primetimepriceguide' ) . esc_html( $model['current_logged_date'] ) . '</small>';
+    if ( ! empty( $model['has_current_price'] ) ) {
+        $content .= '<dl class="ptp-pricing-evidence">';
+        $content .= '<div><dt>' . esc_html__( 'Currency', 'primetimepriceguide' ) . '</dt><dd>USD</dd></div>';
+        $content .= '<div><dt>' . esc_html__( 'Market', 'primetimepriceguide' ) . '</dt><dd>TCGplayer</dd></div>';
+        $content .= '<div><dt>' . esc_html__( 'Method', 'primetimepriceguide' ) . '</dt><dd>' . esc_html__( 'Cached market price', 'primetimepriceguide' ) . '</dd></div>';
+        $content .= '<div><dt>' . esc_html__( 'Treatment', 'primetimepriceguide' ) . '</dt><dd>' . esc_html( $model['treatment_label'] ) . '</dd></div>';
+        $content .= '<div><dt>' . esc_html__( 'Condition', 'primetimepriceguide' ) . '</dt><dd>' . esc_html__( 'Not recorded in cached evidence', 'primetimepriceguide' ) . '</dd></div>';
+        $content .= '<div><dt>' . esc_html__( 'Observation', 'primetimepriceguide' ) . '</dt><dd>';
+
+        if ( ! empty( $model['current_logged_date'] ) ) {
+            $observation_datetime = str_replace( ' ', 'T', (string) $model['current_logged_date'] );
+            $content .= '<time datetime="' . esc_attr( $observation_datetime ) . '">' . esc_html( $model['current_logged_date'] ) . '</time>';
+        } else {
+            $content .= esc_html__( 'Not recorded in cached evidence', 'primetimepriceguide' );
+        }
+
+        $content .= '</dd></div>';
+        $content .= '</dl>';
     }
 
     $content .= '</div>';
@@ -526,7 +574,7 @@ function filter_the_content_in_the_main_loop( $content ) {
 
         if ( ! $cache || ! $data ) {
             $content = '<div class="pg-wrapper">';
-                $content .= '<div class="pg-section">';
+                $content .= '<div class="pg-section vf-c-empty-state is-unavailable">';
                     $content .= '<h2>Card Not Found</h2>';
                     $content .= '<p>This Price Guide card could not be found. Please use the current card link from the Price Guide.</p>';
                 $content .= '</div>';
@@ -545,15 +593,15 @@ function filter_the_content_in_the_main_loop( $content ) {
             rtrim( $image_alt, '.' )
         );
 
-        $content = ptp_priceguide_render_card_identity( $data, $card_name );
+        $content = ptp_priceguide_render_card_identity( $data, $card_name, get_query_var( 'pgpokeid' ) );
         $content .= '<div class="pg-wrapper">';
         
             $content .= '<div class="third padding50r">';
 
                 if ( ! empty( $image_large ) ) {
-                    $content .= '<a rel="sponsored noopener" aria-label="' . esc_attr( $image_link_label ) . '" href="https://www.ebay.com/sch/i.html?_nkw='.$card_name.'+'.$set_name.'&mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5338833587&customid=&toolid=10001&mkevt=1" target="_blank"><img src="' . esc_url( $image_large ) . '" alt="' . esc_attr( $image_alt ) . '" /></a>';
+                    $content .= '<a rel="sponsored noopener" aria-label="' . esc_attr( $image_link_label ) . '" href="https://www.ebay.com/sch/i.html?_nkw='.$card_name.'+'.$set_name.'&mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5338833587&customid=&toolid=10001&mkevt=1" target="_blank"><img class="pg-printing-image" src="' . esc_url( $image_large ) . '" alt="' . esc_attr( $image_alt ) . '" /></a>';
                 } else {
-                    $content .= '<p>Image unavailable.</p>';
+                    $content .= '<p class="pg-printing-image-unavailable vf-c-empty-state is-unavailable">Image unavailable.</p>';
                 }
 
             $content .= '</div>';
