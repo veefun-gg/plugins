@@ -696,6 +696,165 @@
 }
 
 
+/* Astra dark palette only; :where() preserves the existing selector specificity. */
+:where(.astra-dark-mode-enable) .pg-list,
+:where(.astra-dark-mode-enable) .pg-quick-links {
+    --vf-pg-surface: #0f172a;
+    --vf-pg-surface-raised: #1e293b;
+    --vf-pg-surface-hover: #334155;
+    --vf-pg-text: #f8fafc;
+    --vf-pg-muted: #cbd5e1;
+    --vf-pg-border: #64748b;
+    --vf-pg-action: #7dd3fc;
+    --vf-pg-focus: #fbbf24;
+    color-scheme: dark;
+    background-color: var(--vf-pg-surface);
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .pgoptions,
+:where(.astra-dark-mode-enable) .pg-list .pgoptions option {
+    background-color: var(--vf-pg-surface-raised);
+    color: var(--vf-pg-text);
+    border-color: var(--vf-pg-border);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .pgoptions:hover {
+    border-color: var(--vf-pg-action);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .types input {
+    accent-color: var(--vf-pg-action);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .types label,
+:where(.astra-dark-mode-enable) .pg-list .full.results,
+:where(.astra-dark-mode-enable) .pg-list .pg-list-unavailable {
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-quick-links {
+    border: 1px solid var(--vf-pg-border);
+    background: var(--vf-pg-surface);
+}
+
+:where(.astra-dark-mode-enable) .pg-quick-links h2 {
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-quick-links__link {
+    border: 1px solid var(--vf-pg-border);
+    background: var(--vf-pg-surface-raised);
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-quick-links__link:hover,
+:where(.astra-dark-mode-enable) .pg-quick-links__link:focus-visible {
+    background: var(--vf-pg-surface-hover);
+    border-color: var(--vf-pg-action);
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-quick-links__link:focus-visible {
+    outline: 3px solid var(--vf-pg-focus);
+    outline-offset: 3px;
+    box-shadow: none;
+}
+
+:where(.astra-dark-mode-enable) .pg-quick-links__meta {
+    color: var(--vf-pg-muted);
+}
+
+:where(.astra-dark-mode-enable) .pg-quick-links__action {
+    color: var(--vf-pg-action);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .loading {
+    background: var(--vf-pg-surface);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .full.card {
+    border-bottom: 1px solid var(--vf-pg-border);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .card a {
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .card .meta {
+    color: var(--vf-pg-muted);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .card a:hover h3,
+:where(.astra-dark-mode-enable) .pg-list .card a:focus-visible h3,
+:where(.astra-dark-mode-enable) .pg-list .card a.btn {
+    color: var(--vf-pg-action);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .card a.btn:hover,
+:where(.astra-dark-mode-enable) .pg-list .card a.btn:focus-visible {
+    text-decoration: underline;
+}
+
+:where(.astra-dark-mode-enable) .pg-list .card h3 {
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .full.card.odd {
+    background: var(--vf-pg-surface-raised);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .pagination .item {
+    background: var(--vf-pg-surface-raised);
+    border-color: var(--vf-pg-border);
+    color: var(--vf-pg-text);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .pagination .item:not(.disabled):not(.current):hover,
+:where(.astra-dark-mode-enable) .pg-list .pagination .item:not(.disabled):not(.current):focus-visible {
+    background: var(--vf-pg-surface-hover);
+    border-color: var(--vf-pg-action);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .pagination .item.current,
+:where(.astra-dark-mode-enable) .pg-list .pagination .item.current:hover,
+:where(.astra-dark-mode-enable) .pg-list .pagination .item.current:focus-visible {
+    background: var(--vf-pg-action);
+    border-color: var(--vf-pg-action);
+    color: var(--vf-pg-surface);
+}
+
+:where(.astra-dark-mode-enable) .pg-list .pagination .item.disabled,
+:where(.astra-dark-mode-enable) .pg-list .pagination .item.disabled:hover,
+:where(.astra-dark-mode-enable) .pg-list .pagination .item.disabled:focus-visible {
+    background: var(--vf-pg-surface);
+    border-color: var(--vf-pg-border);
+    color: var(--vf-pg-muted);
+    opacity: 1;
+}
+
+/* Retain focus priority against vendor rules, within the dark index only. */
+:where(.astra-dark-mode-enable) .pg-list .card a:focus-visible,
+:where(.astra-dark-mode-enable) .pg-list .btn:focus-visible,
+:where(.astra-dark-mode-enable) .pg-list .pgoptions:focus-visible,
+:where(.astra-dark-mode-enable) .pg-list .types input:focus-visible,
+:where(.astra-dark-mode-enable) .pg-list .pagination .item:focus-visible {
+    outline: 3px solid var(--vf-pg-focus) !important;
+    outline-offset: 3px;
+    box-shadow: none;
+}
+
+/* Keep control focus inside the existing clipping containers. */
+:where(.astra-dark-mode-enable) .pg-list .pgoptions:focus-visible,
+:where(.astra-dark-mode-enable) .pg-list .pagination .item:focus-visible {
+    outline-offset: -3px;
+}
+
+:where(.astra-dark-mode-enable) .pg-list .pagination .item.current:focus-visible {
+    outline-color: var(--vf-pg-surface) !important;
+}
+
+
 /* RELATED CARDS
 --------------------------------------------*/
 
