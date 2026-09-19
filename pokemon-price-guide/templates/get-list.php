@@ -152,6 +152,7 @@ foreach($cards as $card) {
                 </div>
                 <div class="full meta">
                     Avg. Price: <span id="result_<?php echo $card->api_id; ?>">$<?php echo $price; ?></span>
+                    <br />view latest price
                 </div>
             </div>
         </a>
@@ -205,6 +206,7 @@ foreach($cards as $card) {
                 }
                 ?>
                     Avg. Price: <span id="result_<?php echo $card->api_id; ?>">$<?php echo $price; ?></span>
+                    <br />view latest price
                 </div>
                 <div class="quarter meta last">
                     <?php echo '<a class="btn" href="'.get_bloginfo('wpurl').'/price-guide/'.$card->permalink.'/'.$card->api_id.'/">'; ?>
