@@ -35,6 +35,15 @@ add_filter( 'archive_template', 'set_pokedex_archive_template' );
 add_filter( 'taxonomy_template', 'set_pokecategory_template' );
 add_action( 'pre_get_posts', 'set_pokedex_archive_order' );
 add_shortcode( 'veefun_pokedex_search', 'pokedex_search_shortcode' );
+add_filter( 'body_class', 'pokedex_index_body_class' );
+
+function pokedex_index_body_class( $classes ) {
+    if ( is_page( 'pokedex' ) ) {
+        $classes[] = 'veefun-pokedex-index';
+    }
+
+    return $classes;
+}
 
 // ADMIN MENU AND PAGES
 // Add custom taxonomy for Pokémon

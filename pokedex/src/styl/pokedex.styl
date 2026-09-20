@@ -1739,3 +1739,222 @@ body.single-pokedex
                                     font-weight 600
                                     color rgba(255, 255, 255, .74)
                                     white-space nowrap
+
+// Landing Page only: retain the existing GET search and Astra menu behavior.
+body.veefun-pokedex-index
+    --vf-pokedex-surface var(--vf-color-surface, #fff)
+    --vf-pokedex-raised #f3f6f3
+    --vf-pokedex-text var(--vf-color-identity, #17211b)
+    --vf-pokedex-muted var(--vf-color-evidence, #526057)
+    --vf-pokedex-border #647269
+    --vf-pokedex-action var(--vf-color-action, #b3282d)
+    --vf-pokedex-action-hover var(--vf-color-action-hover, #7e171c)
+    --vf-pokedex-on-action var(--vf-color-on-action, #fff)
+    --vf-pokedex-focus var(--vf-color-focus, #b3282d)
+    --vf-pokedex-color-scheme light
+    background var(--vf-pokedex-surface)
+
+    // Remove the legacy full-viewport decorative overlay.
+    &::before
+        content none
+
+    // Match the legacy/vendor IDs only to remove their Page shell overrides.
+    &.ast-theme-transparent-header #masthead
+        position relative
+    header.site-header
+        display block
+        padding 0
+        border-radius 0
+        border-bottom 1px solid var(--vf-pokedex-border)
+        background var(--vf-pokedex-surface)
+        color var(--vf-pokedex-text)
+    .site-header .main-header-bar,
+    .site-header .ast-primary-header-bar,
+    .site-header .ast-mobile-header-content,
+    .site-header .ast-mobile-header-content .main-header-menu,
+    .site-header .ast-mobile-header-content .main-header-menu .menu-link,
+    .site-header .sub-menu
+        // Astra transparent-header colors can have higher inline specificity.
+        background var(--vf-pokedex-surface)!important
+    .site-header .menu-link,
+    .site-header .site-title a,
+    .site-header .site-description,
+    .site-header .ast-header-account-text,
+    .site-header .menu-toggle,
+    .site-header .ast-menu-toggle,
+    .site-header .astra-search-icon
+        color var(--vf-pokedex-text)!important
+    .site-header .ast-custom-button
+        // Pair Astra's nested action text and surface in either palette.
+        background var(--vf-pokedex-surface)!important
+        color var(--vf-pokedex-action)!important
+    .site-header a:hover .ast-custom-button,
+    .site-header a:focus-visible .ast-custom-button
+        color var(--vf-pokedex-action-hover)!important
+    .site-header .menu-toggle,
+    .site-header .ast-menu-toggle
+        background transparent
+    .site-header .menu-link:hover,
+    .site-header .menu-link:focus-visible
+        text-decoration underline
+        text-underline-offset 4px
+
+    #content.site-content
+        background var(--vf-pokedex-surface)
+        color var(--vf-pokedex-text)
+        padding 0 0 32px
+    .site-content > .ast-container
+        max-width 1180px
+        padding-inline 24px
+    #primary
+        min-width 0
+        margin 0
+        padding 32px 0
+    .site-content .ast-article-single
+        background transparent
+        padding 0
+    .site-content .entry-title,
+    .veefun-pokedex-search h2,
+    .veefun-pokedex-search h3
+        color var(--vf-pokedex-text)
+    .veefun-pokedex-search
+        margin-block 24px
+    .veefun-pokedex-search__form
+        display grid
+        grid-template-columns minmax(0, 1fr) auto
+        row-gap 8px
+        column-gap 12px
+        max-width 800px
+        margin 24px 0 32px
+        label
+            grid-column 1 / -1
+            font-weight 600
+        .search-field
+            box-sizing border-box
+            width 100%
+            min-width 0
+            height auto
+            min-height 48px
+            margin 0
+            padding 10px 12px
+            border 1px solid var(--vf-pokedex-border)
+            border-radius 4px
+            background var(--vf-pokedex-surface)
+            color var(--vf-pokedex-text)
+            color-scheme var(--vf-pokedex-color-scheme)
+            font inherit
+            line-height 1.5
+            box-shadow none
+            &::placeholder
+                color var(--vf-pokedex-muted)
+                opacity 1
+        .submit
+            position static
+            display inline-flex
+            align-items center
+            justify-content center
+            width auto
+            height auto
+            min-height 48px
+            margin 0
+            padding 10px 24px
+            border 1px solid var(--vf-pokedex-action)
+            border-radius 4px
+            background var(--vf-pokedex-action)
+            color var(--vf-pokedex-on-action)
+            font inherit
+            font-weight 600
+            line-height 1.5
+            &:hover,
+            &:active
+                background var(--vf-pokedex-action-hover)
+                border-color var(--vf-pokedex-action-hover)
+                color var(--vf-pokedex-on-action)
+    .veefun-pokedex-search__results h3
+        margin-bottom 16px
+    .veefun-pokedex-search .pokedex-archive-list
+        display grid
+        grid-template-columns repeat(auto-fill, minmax(240px, 1fr))
+        row-gap 16px
+        column-gap 16px
+        margin 0
+    .veefun-pokedex-search article.pokedex-archive-card
+        min-width 0
+        margin 0
+        padding 0
+        background var(--vf-pokedex-raised)
+        border 1px solid var(--vf-pokedex-border)
+        border-radius 8px
+        box-shadow none
+    .pokedex-archive-card__link
+        display flex
+        align-items center
+        column-gap 16px
+        height 100%
+        min-height 104px
+        padding 16px
+        border-radius 8px
+        color var(--vf-pokedex-text)
+        text-decoration none
+        &:hover .entry-title
+            text-decoration underline
+            text-underline-offset 4px
+        img
+            flex 0 0 72px
+            width 72px
+            height 72px
+            margin 0
+            object-fit contain
+    .pokedex-archive-card__content
+        min-width 0
+        .entry-title
+            display block
+            margin 0
+            font-size 18px
+            line-height 1.4
+            font-weight 600
+            overflow-wrap anywhere
+        .pokemon-id
+            display block
+            color var(--vf-pokedex-muted)
+            font-size 14px
+            line-height 1.5
+
+    .site-header a:focus-visible,
+    .site-header button:focus-visible,
+    .veefun-pokedex-search a:focus-visible,
+    .veefun-pokedex-search button:focus-visible,
+    .veefun-pokedex-search input:focus-visible
+        // Override legacy outline removal and Astra focus rules on this Page.
+        outline 3px solid var(--vf-pokedex-focus)!important
+        outline-offset 3px
+        box-shadow none
+
+    @media(max-width 600px)
+        .site-content > .ast-container
+            padding-inline 16px
+        .veefun-pokedex-search__form,
+        .veefun-pokedex-search .pokedex-archive-list
+            grid-template-columns minmax(0, 1fr)
+
+    @media(forced-colors active)
+        .site-header a:focus-visible,
+        .site-header button:focus-visible,
+        .veefun-pokedex-search a:focus-visible,
+        .veefun-pokedex-search button:focus-visible,
+        .veefun-pokedex-search input:focus-visible
+            outline-color Highlight!important
+
+// Astra may place its palette class on either root; absence keeps defaults.
+html.astra-dark-mode-enable body.veefun-pokedex-index,
+body.veefun-pokedex-index.astra-dark-mode-enable
+    --vf-pokedex-surface #0f172a
+    --vf-pokedex-raised #1e293b
+    --vf-pokedex-text #f8fafc
+    --vf-pokedex-muted #cbd5e1
+    --vf-pokedex-border #64748b
+    --vf-pokedex-action #7dd3fc
+    --vf-pokedex-action-hover #bae6fd
+    --vf-pokedex-on-action #0f172a
+    --vf-pokedex-focus #fbbf24
+    --vf-pokedex-color-scheme dark
