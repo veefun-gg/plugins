@@ -393,86 +393,115 @@ function pokedex_get_stored_pokemon_limit() {
     return max( 1, (int) $limit );
 }
 
-function pokedex_search_query( $search_term ) {
-    $args = array(
+/**
+ * Browse and search the same published collection, using each card's identity.
+ * Keep unnumbered entries visible; a metadata JOIN would silently exclude them.
+ */
+function pokedex_get_index_entries( $search_term = '' ) {
+    $results = new WP_Query( array(
         'post_type'           => 'pokedex',
         'post_status'         => 'publish',
-        'posts_per_page'      => 24,
-        'orderby'             => 'title',
+        'posts_per_page'      => -1,
+        'orderby'             => 'ID',
         'order'               => 'ASC',
         'ignore_sticky_posts' => true,
         'no_found_rows'       => true,
-    );
+    ) );
+    // Prime featured images in bulk before rendering the complete card collection.
+    update_post_thumbnail_cache( $results );
+    $entries = array();
 
-    if ( preg_match( '/^#?0*([0-9]+)$/', $search_term, $matches ) ) {
-        $args['meta_query'] = array(
-            array(
-                'key'     => 'pokemon_id',
-                'value'   => (string) (int) $matches[1],
-                'compare' => '=',
-            ),
+    foreach ( $results->posts as $post ) {
+        $entries[] = array(
+            'post_id'      => $post->ID,
+            'pokemon_id'   => pokedex_get_archive_card_id( $post->ID ),
+            'pokemon_name' => pokedex_get_archive_card_title( $post->ID ),
         );
-    } else {
-        $args['s'] = $search_term;
     }
 
-    return new WP_Query( $args );
+    usort( $entries, function ( $left, $right ) {
+        $left_number  = ctype_digit( (string) $left['pokemon_id'] ) && (int) $left['pokemon_id'] > 0 ? (int) $left['pokemon_id'] : PHP_INT_MAX;
+        $right_number = ctype_digit( (string) $right['pokemon_id'] ) && (int) $right['pokemon_id'] > 0 ? (int) $right['pokemon_id'] : PHP_INT_MAX;
+
+        return ( $left_number <=> $right_number )
+            ?: strnatcasecmp( $left['pokemon_name'], $right['pokemon_name'] )
+            ?: ( $left['post_id'] <=> $right['post_id'] );
+    } );
+
+    $search_term = trim( $search_term );
+    if ( '' === $search_term ) {
+        return $entries;
+    }
+
+    $is_number = preg_match( '/^#?([0-9]+)$/', $search_term, $matches );
+    return array_values( array_filter( $entries, function ( $entry ) use ( $search_term, $is_number, $matches ) {
+        if ( $is_number ) {
+            return ctype_digit( (string) $entry['pokemon_id'] )
+                && ltrim( (string) $entry['pokemon_id'], '0' ) === ltrim( $matches[1], '0' );
+        }
+
+        return function_exists( 'mb_stripos' )
+            ? false !== mb_stripos( $entry['pokemon_name'], $search_term, 0, 'UTF-8' )
+            : false !== stripos( $entry['pokemon_name'], $search_term );
+    } ) );
 }
 
 function pokedex_search_shortcode() {
     $search_term = '';
 
-    if ( isset( $_GET['pokedex_search'] ) ) {
-        $search_term = sanitize_text_field( wp_unslash( $_GET['pokedex_search'] ) );
+    if ( isset( $_GET['pokedex_search'] ) && is_string( $_GET['pokedex_search'] ) ) {
+        $search_term = trim( sanitize_text_field( wp_unslash( $_GET['pokedex_search'] ) ) );
     }
 
     $field_id = function_exists( 'wp_unique_id' ) ? wp_unique_id( 'veefun-pokedex-search-' ) : 'veefun-pokedex-search';
+    $heading_id = $field_id . '-heading';
+    $entries = pokedex_get_index_entries( $search_term );
 
     ob_start();
     ?>
-    <section class="veefun-pokedex-search" aria-labelledby="veefun-pokedex-search-heading">
-        <h2 id="veefun-pokedex-search-heading"><?php esc_html_e( 'Search the Pokédex', 'veefun' ); ?></h2>
+    <section class="veefun-pokedex-search" aria-labelledby="<?php echo esc_attr( $heading_id ); ?>">
+        <h2 id="<?php echo esc_attr( $heading_id ); ?>"><?php esc_html_e( 'Search the Pokédex', 'veefun' ); ?></h2>
         <form class="search-form veefun-pokedex-search__form" method="get" action="<?php echo esc_url( home_url( '/pokedex/' ) ); ?>" role="search">
             <label for="<?php echo esc_attr( $field_id ); ?>"><?php esc_html_e( 'Pokémon name or number', 'veefun' ); ?></label>
-            <input id="<?php echo esc_attr( $field_id ); ?>" class="search-field" type="search" name="pokedex_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php echo esc_attr__( 'Try Machop or 66', 'veefun' ); ?>" />
+            <input id="<?php echo esc_attr( $field_id ); ?>" class="search-field" type="search" name="pokedex_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php echo esc_attr__( 'Try Mew or 151', 'veefun' ); ?>" />
             <button class="submit" type="submit"><?php esc_html_e( 'Search', 'veefun' ); ?></button>
         </form>
 
-        <?php if ( '' !== $search_term ) : ?>
-            <?php $results = pokedex_search_query( $search_term ); ?>
-            <div class="veefun-pokedex-search__results" aria-live="polite">
-                <h3><?php echo esc_html( sprintf( __( 'Results for “%s”', 'veefun' ), $search_term ) ); ?></h3>
+        <div class="veefun-pokedex-search__results">
+            <h3><?php echo '' === $search_term ? esc_html__( 'All Pokémon', 'veefun' ) : esc_html( sprintf( __( 'Results for “%s”', 'veefun' ), $search_term ) ); ?></h3>
+            <p><?php echo esc_html( sprintf( __( '%s Pokémon shown.', 'veefun' ), number_format_i18n( count( $entries ) ) ) ); ?></p>
+            <?php if ( '' !== $search_term ) : ?>
+                <p><a href="<?php echo esc_url( home_url( '/pokedex/' ) ); ?>"><?php esc_html_e( 'Clear search', 'veefun' ); ?></a></p>
+            <?php endif; ?>
 
-                <?php if ( $results->have_posts() ) : ?>
-                    <div class="pokedex-archive-list">
-                        <?php while ( $results->have_posts() ) : $results->the_post(); ?>
-                            <?php
-                            $post_id      = get_the_ID();
-                            $pokemon_id   = pokedex_get_archive_card_id( $post_id );
-                            $pokemon_name = pokedex_get_archive_card_title( $post_id );
-                            $image_url    = pokedex_get_archive_card_image_url( $post_id );
-                            ?>
-                            <article <?php post_class( 'pokedex pokedex-archive-card' ); ?>>
-                                <a class="pokedex-archive-card__link" href="<?php the_permalink(); ?>">
-                                    <?php if ( '' !== $image_url ) : ?>
-                                        <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( '#' . $pokemon_id . ' ' . $pokemon_name ); ?>" loading="lazy" decoding="async" />
+            <?php if ( $entries ) : ?>
+                <div class="pokedex-archive-list">
+                    <?php foreach ( $entries as $entry ) : ?>
+                        <?php
+                        $post_id      = $entry['post_id'];
+                        $pokemon_id   = $entry['pokemon_id'];
+                        $pokemon_name = $entry['pokemon_name'];
+                        $image_url    = pokedex_get_archive_card_image_url( $post_id );
+                        ?>
+                        <article <?php post_class( 'pokedex pokedex-archive-card', $post_id ); ?>>
+                            <a class="pokedex-archive-card__link" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
+                                <?php if ( '' !== $image_url ) : ?>
+                                    <img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( '#' . $pokemon_id . ' ' . $pokemon_name ); ?>" loading="lazy" decoding="async" />
+                                <?php endif; ?>
+                                <span class="pokedex-archive-card__content">
+                                    <span class="entry-title"><?php echo esc_html( $pokemon_name ); ?></span>
+                                    <?php if ( '' !== (string) $pokemon_id ) : ?>
+                                        <span class="pokemon-id"><sup>#</sup><?php echo esc_html( $pokemon_id ); ?></span>
                                     <?php endif; ?>
-                                    <span class="pokedex-archive-card__content">
-                                        <span class="entry-title"><?php echo esc_html( $pokemon_name ); ?></span>
-                                        <?php if ( '' !== (string) $pokemon_id ) : ?>
-                                            <span class="pokemon-id"><sup>#</sup><?php echo esc_html( $pokemon_id ); ?></span>
-                                        <?php endif; ?>
-                                    </span>
-                                </a>
-                            </article>
-                        <?php endwhile; ?>
-                    </div>
-                <?php else : ?>
-                    <p><?php esc_html_e( 'No matching Pokémon were found in the stored Pokédex.', 'veefun' ); ?></p>
-                <?php endif; ?>
-            </div>
-            <?php wp_reset_postdata(); ?>
-        <?php endif; ?>
+                                </span>
+                            </a>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            <?php else : ?>
+                <p><?php echo '' === $search_term ? esc_html__( 'No Pokémon have been published yet.', 'veefun' ) : esc_html__( 'No matching Pokémon were found in the stored Pokédex.', 'veefun' ); ?></p>
+            <?php endif; ?>
+        </div>
     </section>
     <?php
 
